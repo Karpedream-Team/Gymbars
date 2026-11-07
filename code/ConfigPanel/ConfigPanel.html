@@ -174,6 +174,7 @@
     var CP_START_TAB = <?!= JSON.stringify(activeTab || 'sitio') ?>;
     var CP_WEB_URL = <?!= JSON.stringify(webAppUrl || '') ?>;
     var CP_IS_WEB_APP = <?!= JSON.stringify(typeof isWebApp !== 'undefined' && isWebApp === true) ?>;
+    var CP_AUTH_CALLBACK_URL = <?!= JSON.stringify(typeof authCallbackUrl !== 'undefined' ? authCallbackUrl : '') ?>;
     var CP_GOOGLE_AUTH_URL = <?!= JSON.stringify(typeof googleAuthStartUrl !== 'undefined' ? googleAuthStartUrl : '') ?>;
 
     var CP = {
@@ -358,7 +359,7 @@
       var authTarget = CP_GOOGLE_AUTH_URL +
         (CP_GOOGLE_AUTH_URL.indexOf('?') === -1 ? '?' : '&') +
         'nonce=' + encodeURIComponent(nonce) +
-        (CP_WEB_URL ? ('&callback=' + encodeURIComponent(CP_WEB_URL)) : '');
+        (CP_AUTH_CALLBACK_URL ? ('&callback=' + encodeURIComponent(CP_AUTH_CALLBACK_URL)) : '');
 
       var popup = null;
       try {

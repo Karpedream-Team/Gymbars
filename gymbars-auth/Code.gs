@@ -93,36 +93,19 @@ function redirectPage_(url, nonce) {
     'border:3.5px solid rgba(255,255,255,0.15);border-top-color:#60A5FA;animation:spin .8s linear infinite}' +
     '@keyframes spin{to{transform:rotate(360deg)}}' +
     'h1{font-size:20px;margin:0 0 8px;font-weight:700}p{color:#94A3B8;font-size:14px;margin:0}' +
-    'button{display:none;margin-top:22px;width:100%;border:0;border-radius:10px;' +
-    'padding:13px 18px;cursor:pointer;background:#2563EB;color:#ffffff;font-weight:700;font-size:14px}' +
+    'a.btn{display:block;margin-top:22px;border-radius:10px;text-decoration:none;' +
+    'padding:13px 18px;background:#2563EB;color:#ffffff;font-weight:700;font-size:14px}' +
     '</style></head><body>' +
     '<div class="card">' +
     '<div class="spinner" id="spinner"></div>' +
     '<h1>¡Listo!</h1>' +
-    '<p id="msg">Verificando cuenta en Gymbars…</p>' +
-    '<button id="go" type="button" onclick="goToSite()">Continuar</button>' +
+    '<p id="msg">Pulsa Continuar para terminar de iniciar sesión en Gymbars.</p>' +
+    '<a class="btn" id="go" href="' + escapeHtml_(url) + '" target="_top">Continuar</a>' +
     '</div>' +
     '<script>' +
     'var target=' + JSON.stringify(url) + ';' +
-    'var nonce=' + JSON.stringify(nonce) + ';' +
-    'function goToSite(){' +
-    'try{window.top.location.href=target;}catch(e){' +
-    'try{window.location.href=target;}catch(e2){}}}' +
-    'var sent=false;' +
-    'try{var o=window.top.opener||window.opener;' +
-    'if(o){' +
-    'o.postMessage({type:"gymbarsGoogleAuthUrl",url:target,nonce:nonce},"*");' +
-    'sent=true;}}catch(e){}' +
-    'if(!sent){' +
-    'try{window.location.href=target;}catch(e){}' +
-    'setTimeout(function(){' +
-    'document.getElementById("spinner").style.display="none";' +
-    'document.getElementById("msg").textContent="Pulsa Continuar para terminar de iniciar sesión.";' +
-    'document.getElementById("go").style.display="block";},600);}' +
-    'setTimeout(function(){' +
-    'document.getElementById("msg").textContent="Pulsa Continuar si la ventana de Gymbars no responde.";' +
-    'document.getElementById("go").style.display="block";' +
-    '},8000);' +
+    'try{window.top.location.href=target;}catch(e){}' +
+    'setTimeout(function(){document.getElementById("spinner").style.display="none";},1500);' +
     '<\/script></body></html>';
 
   return HtmlService.createHtmlOutput(html)

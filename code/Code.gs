@@ -96,6 +96,7 @@ function doGet(e) {
     adminTemplate.webAppUrl = getWebsiteUrl();
     adminTemplate.isWebApp = true;
     adminTemplate.googleAuthStartUrl = GOOGLE_AUTH_START_URL;
+    try { adminTemplate.authCallbackUrl = ScriptApp.getService().getUrl(); } catch (_) { adminTemplate.authCallbackUrl = ''; }
 
     var siteTitle = 'Gymbars';
     try {
