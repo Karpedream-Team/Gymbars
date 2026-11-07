@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+  <?!= include('ConfigPanel/ConfigPanelStyles') ?>
+</head>
+
+<body>
+  <!-- ==================== AUTH GATE (WEB ACCESS) ==================== -->
+  <div id="cp-auth-gate" style="display:none;">
+    <!-- Vista 1: Comprobando permisos -->
+    <div class="cp-gate-card" id="cp-gate-view-checking">
+      <div class="cp-gate-icon cp-gate-icon--loading">
+        <i class="fa-solid fa-spinner fa-spin"></i>
+      </div>
+      <h2>Verificando acceso</h2>
+      <p id="cp-gate-checking-msg">Validando permisos en la hoja de cálculo de Google Sheets...</p>
+    </div>
+
+    <!-- Vista 2: Iniciar sesión -->
+    <div class="cp-gate-card" id="cp-gate-view-login" style="display:none;">
+      <div class="cp-gate-icon cp-gate-icon--lock">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      <h2>Panel de Gymbars</h2>
+      <p>El acceso a este panel está restringido exclusivamente a las cuentas de Google (Gmail) con permisos de acceso en la hoja de cálculo de Google Sheets.</p>
+      <button type="button" class="cp-google-btn" onclick="cpDoGoogleLogin()">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        <span>Continuar con Google</span>
+      </button>
+      <div id="cp-gate-login-error" style="color:#ef4444; font-size:12px; margin-top:12px; display:none;"></div>
+      <div style="margin-top:16px;">
+        <a href="." class="cp-gate-footer-link" id="cp-gate-site-link">← Volver al sitio web</a>
+      </div>
+    </div>
+
+    <!-- Vista 3: Acceso denegado -->
+    <div class="cp-gate-card" id="cp-gate-view-denied" style="display:none;">
+      <div class="cp-gate-icon cp-gate-icon--error">
+        <i class="fa-solid fa-ban"></i>
+      </div>
+      <h2>Acceso No Autorizado</h2>
+      <p id="cp-gate-denied-message">Tu cuenta de Google no tiene permisos de acceso en la hoja de cálculo de Google Sheets.</p>
+      <div style="font-size:12px; color:#94A3B8; background:rgba(0,0,0,0.25); padding:10px; border-radius:8px; margin-bottom:16px;">
+        Para ingresar, el propietario del documento debe compartir el Google Sheet con tu correo (<strong id="cp-gate-denied-email" style="color:#60A5FA;"></strong>) con permisos de Editor o Lector.
+      </div>
+      <button type="button" class="cp-google-btn" onclick="cpDoGoogleLogin()">
+        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        <span>Iniciar sesión con otra cuenta</span>
+      </button>
+      <div style="margin-top:16px;">
+        <a href="." class="cp-gate-footer-link">← Volver al sitio web</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="cp-app">
+    <nav class="cp-rail" aria-label="Secciones del panel">
+      <div class="cp-brand">
+        <span class="cp-mark" aria-hidden="true">G</span>
+        <span class="cp-brand-text">
+          <strong>Gymbars</strong>
+          <small>Panel del sitio</small>
+        </span>
+      </div>
+
+      <div class="cp-nav" id="cp-nav">
+        <button type="button" class="cp-nav-item" data-tab="sitio">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+          <span>Sitio</span><i class="cp-dot" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="cp-nav-item" data-tab="imagenes">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          <span>Imágenes</span><i class="cp-dot" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="cp-nav-item" data-tab="carrusel">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+          <span>Carrusel</span><i class="cp-dot" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="cp-nav-item" data-tab="caracteristicas">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <span>Características</span><i class="cp-dot" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="cp-nav-item" data-tab="programas">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v16M18 4v16M3 9h6M15 9h6M3 15h6M15 15h6"/></svg>
+          <span>Programas</span><i class="cp-dot" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="cp-nav-item" data-tab="horario">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
+          <span>Horario</span><i class="cp-dot" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="cp-nav-item" data-tab="redes">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>
+          <span>Redes</span><i class="cp-dot" aria-hidden="true"></i>
+        </button>
+        <button type="button" class="cp-nav-item" data-tab="sistema">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>Sistema</span><i class="cp-dot" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <div class="cp-rail-foot">
+        <a id="cp-web-link" href="#" target="_blank" rel="noopener">
+          Abrir sitio
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
+      </div>
+    </nav>
+
+    <main class="cp-main">
+      <header class="cp-topbar">
+        <div class="cp-heading">
+          <h1 id="cp-title">Sitio</h1>
+          <p id="cp-subtitle">Textos, contacto y colores.</p>
+        </div>
+        <div class="cp-actions">
+          <span class="cp-dirty" id="cp-dirty" hidden>Cambios sin guardar</span>
+          <span class="cp-user-badge" id="cp-user-badge" style="display:none;">
+            <i class="fa-brands fa-google"></i>
+            <span id="cp-user-email"></span>
+            <span class="cp-badge-verified"><i class="fa-solid fa-check"></i> Sheets OK</span>
+            <button type="button" class="cp-btn-logout" onclick="cpLogout()" title="Cerrar sesión">Salir</button>
+          </span>
+          <button type="button" class="cp-btn cp-btn--primary" id="cp-save">Guardar cambios</button>
+        </div>
+      </header>
+      <div class="cp-progress" id="cp-progress" aria-hidden="true"></div>
+
+      <div class="cp-body" id="cp-body">
+        <section class="cp-pane" id="pane-sitio" aria-labelledby="cp-title">
+          <?!= include('ConfigPanel/TabSitio/TabSitio') ?>
+        </section>
+        <section class="cp-pane" id="pane-imagenes">
+          <?!= include('ConfigPanel/TabImagenes/TabImagenes') ?>
+        </section>
+        <section class="cp-pane" id="pane-carrusel">
+          <?!= include('ConfigPanel/TabCarrusel/TabCarrusel') ?>
+        </section>
+        <section class="cp-pane" id="pane-caracteristicas">
+          <?!= include('ConfigPanel/TabCaracteristicas/TabCaracteristicas') ?>
+        </section>
+        <section class="cp-pane" id="pane-programas">
+          <?!= include('ConfigPanel/TabProgramas/TabProgramas') ?>
+        </section>
+        <section class="cp-pane" id="pane-horario">
+          <?!= include('ConfigPanel/TabHorario/TabHorario') ?>
+        </section>
+        <section class="cp-pane" id="pane-redes">
+          <?!= include('ConfigPanel/TabRedes/TabRedes') ?>
+        </section>
+        <section class="cp-pane" id="pane-sistema">
+          <?!= include('ConfigPanel/TabSistema/TabSistema') ?>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <?!= include('ConfigPanel/ImagePicker/ImagePicker') ?>
+
+  <div class="cp-toasts" id="cp-toasts" role="status" aria-live="polite"></div>
+
+  <script>
+    // ============================================================
+    // ===  Estado compartido del panel  ==========================
+    // ============================================================
+
+    var CP_START_TAB = <?!= JSON.stringify(activeTab || 'sitio') ?>;
+    var CP_WEB_URL = <?!= JSON.stringify(webAppUrl || '') ?>;
+    var CP_IS_WEB_APP = <?!= JSON.stringify(typeof isWebApp !== 'undefined' && isWebApp === true) ?>;
+    var CP_GOOGLE_AUTH_URL = <?!= JSON.stringify(typeof googleAuthStartUrl !== 'undefined' ? googleAuthStartUrl : '') ?>;
+
+    var CP = {
+      data: null,
+      tab: CP_START_TAB,
+      dirty: {},
+      model: {
+        site: [],
+        images: [],
+        carousel: [],
+        features: [],
+        programs: [],
+        schedule: [],
+        social: []
+      },
+      picker: null
+    };
+
+    var CP_TABS = {
+      sitio: {
+        title: 'Sitio',
+        subtitle: 'Nombre, contacto, redes y colores del sitio.',
+        save: 'cpSaveSiteTab'
+      },
+      imagenes: {
+        title: 'Imágenes',
+        subtitle: 'Las fotos que usa el sitio. Súbelas a Drive o elige las que ya existen.',
+        save: 'cpSaveImagesTab'
+      },
+      carrusel: {
+        title: 'Carrusel',
+        subtitle: 'Las diapositivas grandes de la portada.',
+        save: 'cpSaveCarouselTab'
+      },
+      caracteristicas: {
+        title: 'Características',
+        subtitle: 'Los tres bloques que explican qué ofrece el gimnasio.',
+        save: 'cpSaveFeaturesTab'
+      },
+      programas: {
+        title: 'Programas',
+        subtitle: 'Rutinas, instrucciones y ejercicios de cada nivel.',
+        save: 'cpSaveProgramsTab'
+      },
+      horario: {
+        title: 'Horario',
+        subtitle: 'Días, turnos y colores. Un día sin turnos se muestra como «Cerrado».',
+        save: 'cpSaveScheduleTab'
+      },
+      redes: {
+        title: 'Redes',
+        subtitle: 'Los enlaces e iconos del pie de página y la tarjeta de contacto.',
+        save: 'cpSaveSocialTab'
+      },
+      sistema: {
+        title: 'Sistema',
+        subtitle: 'Comprobaciones, respaldos y actividad reciente.',
+        save: ''
+      }
+    };
+
+
+    // ============================================================
+    // ===  Arranque y Autenticación Web  =========================
+    // ============================================================
+
+    function cpInit() {
+      if (CP_WEB_URL) {
+        var webLink = document.getElementById('cp-web-link');
+        if (webLink) webLink.href = CP_WEB_URL;
+        var siteLink = document.getElementById('cp-gate-site-link');
+        if (siteLink) siteLink.href = CP_WEB_URL;
+      } else {
+        var webLink = document.getElementById('cp-web-link');
+        if (webLink) webLink.hidden = true;
+      }
+
+      cpBindGlobalEvents();
+
+      if (CP_IS_WEB_APP) {
+        cpInitWebAuth();
+      } else {
+        cpLoadData();
+      }
+    }
+
+    function cpGetToken() {
+      try { return localStorage.getItem('gymbarsAdminToken') || ''; } catch (_) { return ''; }
+    }
+
+    function cpSetToken(val) {
+      try { localStorage.setItem('gymbarsAdminToken', val); } catch (_) {}
+    }
+    
+    function cpRemoveToken() {
+      try { localStorage.removeItem('gymbarsAdminToken'); } catch (_) {}
+    }
+
+    function cpInitWebAuth() {
+      cpShowGateView('checking');
+      var chkMsg = document.getElementById('cp-gate-checking-msg');
+      if (chkMsg) chkMsg.textContent = 'Validando permisos en la hoja de cálculo de Google Sheets...';
+      var token = cpGetToken();
+
+      google.script.run
+        .withSuccessHandler(function (res) {
+          if (res && res.authorized) {
+            cpOnAccessGranted(res.email);
+          } else if (res && res.unauthorized) {
+            cpShowGateUnauthorized(res.email, res.error);
+          } else {
+            cpShowGateView('login');
+          }
+        })
+        .withFailureHandler(function (err) {
+          cpShowGateView('login');
+          cpSetGateError((err && err.message) ? err.message : 'Error al verificar acceso.');
+        })
+        .cpVerifyAdminAccess(token);
+    }
+
+    function cpOnAccessGranted(email) {
+      var gate = document.getElementById('cp-auth-gate');
+      if (gate) gate.style.display = 'none';
+
+      var badge = document.getElementById('cp-user-badge');
+      if (badge) badge.style.display = 'inline-flex';
+      var emailEl = document.getElementById('cp-user-email');
+      if (emailEl && email) emailEl.textContent = email;
+
+      cpLoadData();
+    }
+
+    function cpShowGateView(viewName) {
+      var gate = document.getElementById('cp-auth-gate');
+      if (gate) gate.style.display = 'flex';
+
+      var chk = document.getElementById('cp-gate-view-checking');
+      var lgn = document.getElementById('cp-gate-view-login');
+      var den = document.getElementById('cp-gate-view-denied');
+      if (chk) chk.style.display = (viewName === 'checking') ? 'block' : 'none';
+      if (lgn) lgn.style.display = (viewName === 'login') ? 'block' : 'none';
+      if (den) den.style.display = (viewName === 'denied') ? 'block' : 'none';
+    }
+
+    function cpShowGateUnauthorized(email, errorMsg) {
+      cpShowGateView('denied');
+      var emailEl = document.getElementById('cp-gate-denied-email');
+      if (emailEl) emailEl.textContent = email || 'desconocido';
+      var msgEl = document.getElementById('cp-gate-denied-message');
+      if (msgEl && errorMsg) msgEl.textContent = errorMsg;
+    }
+
+    function cpSetGateError(msg) {
+      var el = document.getElementById('cp-gate-login-error');
+      if (el) {
+        el.textContent = msg || '';
+        el.style.display = msg ? 'block' : 'none';
+      }
+    }
+
+    var _cpAuthPopup = null;
+    window.addEventListener('message', function (e) {
+      var data = e.data;
+      if (!data || data.type !== 'gymbarsGoogleAuthUrl') return;
+      if (data.url && _cpAuthPopup && !_cpAuthPopup.closed) {
+        try { _cpAuthPopup.location.href = data.url; } catch (_) {}
+      }
+    });
+
+    function cpDoGoogleLogin() {
+      if (!CP_GOOGLE_AUTH_URL) {
+        alert('El inicio de sesión con Google no está configurado en el servidor.');
+        return;
+      }
+
+      cpSetGateError('');
+      var nonce = (window.crypto && typeof crypto.randomUUID === 'function')
+        ? crypto.randomUUID().replace(/-/g, '')
+        : 'admin_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+
+      var authTarget = CP_GOOGLE_AUTH_URL +
+        (CP_GOOGLE_AUTH_URL.indexOf('?') === -1 ? '?' : '&') +
+        'nonce=' + encodeURIComponent(nonce) +
+        (CP_WEB_URL ? ('&callback=' + encodeURIComponent(CP_WEB_URL)) : '');
+
+      var popup = null;
+      try {
+        popup = window.open(authTarget, 'gymbarsGoogleAuth', 'width=520,height=680,menubar=no,toolbar=no,status=no');
+        _cpAuthPopup = popup;
+      } catch (e) { popup = null; }
+
+      if (!popup) {
+        alert('Por favor permite las ventanas emergentes en tu navegador para continuar con Google.');
+        return;
+      }
+
+      cpShowGateView('checking');
+      var chkMsg = document.getElementById('cp-gate-checking-msg');
+      if (chkMsg) chkMsg.textContent = 'Esperando inicio de sesión con Google...';
+
+      var attempts = 0;
+      var maxAttempts = 140;
+      var timer = setInterval(function () {
+        attempts++;
+        if (attempts > maxAttempts) {
+          clearInterval(timer);
+          cpShowGateView('login');
+          cpSetGateError('El inicio de sesión expiró. Inténtalo de nuevo.');
+          return;
+        }
+
+        google.script.run
+          .withSuccessHandler(function (res) {
+            if (!res || res.status === 'pending') return;
+            clearInterval(timer);
+            if (popup && !popup.closed) {
+              try { popup.close(); } catch (_) {}
+            }
+
+            if (res.status === 'ok' && res.success && res.token) {
+              cpSetToken(res.token);
+              if (chkMsg) chkMsg.textContent = 'Validando permisos en el Google Sheet...';
+              google.script.run
+                .withSuccessHandler(function (authRes) {
+                  if (authRes && authRes.authorized) {
+                    cpOnAccessGranted(authRes.email);
+                  } else if (authRes && authRes.unauthorized) {
+                    cpShowGateUnauthorized(authRes.email, authRes.error);
+                  } else {
+                    cpShowGateView('login');
+                    cpSetGateError((authRes && authRes.error) || 'Acceso no autorizado.');
+                  }
+                })
+                .withFailureHandler(function (err) {
+                  cpShowGateView('login');
+                  cpSetGateError((err && err.message) ? err.message : 'Error al verificar acceso.');
+                })
+                .cpVerifyAdminAccess(res.token);
+            } else {
+              cpShowGateView('login');
+              cpSetGateError((res && res.error) || 'No se pudo iniciar sesión con Google.');
+            }
+          })
+          .withFailureHandler(function () {})
+          .cpGetGoogleAuthResult(nonce);
+      }, 2000);
+    }
+
+    function cpLogout() {
+      var token = cpGetToken();
+      cpRemoveToken();
+      if (token) {
+        try {
+          google.script.run.cpLogoutAdmin(token);
+        } catch (_) {}
+      }
+      window.location.reload();
+    }
+
+    function cpLoadData() {
+      cpBusy(true);
+      google.script.run
+        .withSuccessHandler(function (data) {
+          cpBusy(false);
+          try {
+            cpApplyData(data);
+            cpSwitchTab(CP_START_TAB || 'sitio', true);
+          } catch (err) {
+            cpFatal(err);
+          }
+        })
+        .withFailureHandler(function (err) {
+          cpBusy(false);
+          cpFatal(err);
+        })
+        .cpGetData();
+    }
+
+    function cpFatal(err) {
+      var message = err && err.message ? err.message : String(err || 'Error desconocido');
+      document.getElementById('cp-body').innerHTML =
+        '<div class="cp-empty cp-empty--error">' +
+          '<strong>No se pudo cargar el panel.</strong>' +
+          '<p>' + cpEsc(message) + '</p>' +
+          '<p>Abre el panel desde la hoja de cálculo con el menú <b>Gymbars → Abrir panel de administración</b>.</p>' +
+        '</div>';
+      cpToast('No se pudo cargar el panel.', 'error', true);
+    }
+
+    /**
+     * Copia los datos del servidor al estado local y pinta todas las pestañas.
+     * @param {Object} data
+     */
+    function cpApplyData(data) {
+      CP.data = data || {};
+      CP.model.site = (data.site || []).map(function (row) {
+        return { key: row.key, value: row.value };
+      });
+      CP.model.images = (data.images || []).map(function (image) {
+        return {
+          ref: image.ref,
+          oldRef: image.ref,
+          url: image.url,
+          pos: image.pos || 'center',
+          source: image.source || '',
+          fit: image.fit || 'cover',
+          thumb: image.thumb || ''
+        };
+      });
+      CP.model.carousel = (data.carousel || []).map(function (item) {
+        return { title: item.title, description: item.description, image: item.image };
+      });
+      CP.model.features = (data.features || []).map(function (item) {
+        return { title: item.title, description: item.description, image: item.image };
+      });
+      CP.model.programs = (data.programs || []).map(function (item) {
+        return {
+          title: item.title,
+          image: item.image,
+          instructions: (item.instructions || []).slice(),
+          exercises: (item.exercises || []).slice()
+        };
+      });
+      CP.model.schedule = (data.schedule || []).map(function (group) {
+        return {
+          day: group.day,
+          color: group.color || '#0E0E53',
+          shifts: (group.shifts || []).map(function (shift) {
+            return { label: shift.label, time: shift.time };
+          })
+        };
+      });
+      CP.model.social = (data.social || []).map(function (item) {
+        return { name: item.name, icon: item.icon, url: item.url };
+      });
+
+      cpRenderSite();
+      cpRenderImages();
+      cpRenderCarousel();
+      cpRenderFeatures();
+      cpRenderPrograms();
+      cpRenderSchedule();
+      cpRenderSocial();
+      cpRenderSystem();
+
+      CP.dirty = {};
+      cpRefreshDirtyUi();
+    }
+
+    function cpRenderAll() {
+      cpRenderSite();
+      cpRenderImages();
+      cpRenderCarousel();
+      cpRenderFeatures();
+      cpRenderPrograms();
+      cpRenderSchedule();
+      cpRenderSocial();
+      cpRenderSystem();
+    }
+
+
+    // ============================================================
+    // ===  Navegación  ===========================================
+    // ============================================================
+
+    function cpBindGlobalEvents() {
+      document.getElementById('cp-nav').addEventListener('click', function (event) {
+        var button = event.target.closest('.cp-nav-item');
+        if (!button) return;
+        cpSwitchTab(button.getAttribute('data-tab'));
+      });
+
+      document.getElementById('cp-save').addEventListener('click', cpSaveCurrentTab);
+
+      document.addEventListener('input', function (event) {
+        if (event.target.closest('.cp-pane') && !event.target.hasAttribute('data-no-dirty')) cpMarkDirty();
+        cpSyncColorCode(event.target);
+      });
+
+      document.addEventListener('change', function (event) {
+        if (event.target.closest('.cp-pane') && !event.target.hasAttribute('data-no-dirty')) cpMarkDirty();
+        cpSyncColorCode(event.target);
+      });
+
+      window.addEventListener('beforeunload', function (event) {
+        if (!cpHasDirty()) return;
+        event.preventDefault();
+        event.returnValue = '';
+      });
+
+      document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') cpClosePicker();
+      });
+    }
+
+    /**
+     * @param {string} tab
+     * @param {boolean} [force]
+     */
+    function cpSwitchTab(tab, force) {
+      if (!CP_TABS[tab]) return;
+      if (!force && tab !== CP.tab && CP.dirty[CP.tab]) {
+        var current = CP_TABS[CP.tab].title;
+        if (!window.confirm('Tienes cambios sin guardar en «' + current + '». ¿Salir de todos modos?')) {
+          return;
+        }
+        CP.dirty[CP.tab] = false;
+        cpRefreshDirtyUi();
+      }
+
+      CP.tab = tab;
+
+      Array.prototype.forEach.call(document.querySelectorAll('.cp-nav-item'), function (button) {
+        button.classList.toggle('is-active', button.getAttribute('data-tab') === tab);
+      });
+      Array.prototype.forEach.call(document.querySelectorAll('.cp-pane'), function (pane) {
+        pane.classList.toggle('is-active', pane.id === 'pane-' + tab);
+      });
+
+      var config = CP_TABS[tab];
+      document.getElementById('cp-title').textContent = config.title;
+      document.getElementById('cp-subtitle').textContent = config.subtitle;
+
+      var save = document.getElementById('cp-save');
+      save.hidden = !config.save;
+
+      document.getElementById('cp-body').scrollTop = 0;
+      cpRefreshDirtyUi();
+    }
+
+    function cpSaveCurrentTab() {
+      var config = CP_TABS[CP.tab];
+      if (!config || !config.save) return;
+      var save = window[config.save];
+      if (typeof save === 'function') save();
+    }
+
+
+    // ============================================================
+    // ===  Cambios sin guardar  ==================================
+    // ============================================================
+
+    function cpMarkDirty() {
+      if (!CP_TABS[CP.tab] || !CP_TABS[CP.tab].save) return;
+      CP.dirty[CP.tab] = true;
+      cpRefreshDirtyUi();
+    }
+
+    function cpRefreshDirtyUi() {
+      var dirty = !!CP.dirty[CP.tab];
+      var badge = document.getElementById('cp-dirty');
+      if (badge) badge.hidden = !dirty;
+
+      Array.prototype.forEach.call(document.querySelectorAll('.cp-nav-item'), function (button) {
+        var tab = button.getAttribute('data-tab');
+        button.classList.toggle('is-dirty', !!CP.dirty[tab]);
+      });
+    }
+
+    function cpHasDirty() {
+      return Object.keys(CP.dirty).some(function (tab) { return CP.dirty[tab]; });
+    }
+
+    function cpClearDirty(tab) {
+      CP.dirty[tab] = false;
+      cpRefreshDirtyUi();
+    }
+
+
+    // ============================================================
+    // ===  Llamadas al servidor  =================================
+    // ============================================================
+
+    /**
+     * Ejecuta una función de Apps Script con manejo de estado y errores.
+     * @param {string} fn
+     * @param {Array} args
+     * @param {{busy?: (boolean|string), ok?: Function, fail?: Function}} [handlers]
+     */
+    function cpRun(fn, args, handlers) {
+      handlers = handlers || {};
+      var showBusy = handlers.busy !== false;
+
+      if (showBusy) {
+        cpBusy(true, typeof handlers.busy === 'string' ? handlers.busy : '');
+      }
+
+      google.script.run
+        .withSuccessHandler(function (result) {
+          if (showBusy) cpBusy(false);
+          if (handlers.ok) handlers.ok(result);
+          else cpToast((result && result.message) || 'Listo.', 'ok');
+        })
+        .withFailureHandler(function (err) {
+          if (showBusy) cpBusy(false);
+          var message = err && err.message ? err.message : 'No se pudo completar la acción.';
+          if (handlers.fail) handlers.fail(message);
+          else cpToast(message, 'error');
+        })[fn].apply(null, args || []);
+    }
+
+    /**
+     * Guarda la pestaña actual, recarga los datos y vuelve a pintar sin
+     * perder la posición del scroll.
+     *
+     * @param {string} fn
+     * @param {Array} args
+     */
+    function cpSaveAndReload(fn, args) {
+      cpRun(fn, args, {
+        busy: 'Guardando…',
+        ok: function (result) {
+          cpRun('cpGetData', [], {
+            busy: false,
+            ok: function (data) {
+              var scroll = document.getElementById('cp-body').scrollTop;
+              cpApplyData(data);
+              cpSwitchTab(CP.tab, true);
+              document.getElementById('cp-body').scrollTop = scroll;
+              cpToast((result && result.message) || 'Cambios guardados.', result && result.warning ? 'warn' : 'ok');
+            },
+            fail: function (message) {
+              cpClearDirty(CP.tab);
+              cpToast('Se guardó, pero no se pudo recargar: ' + message, 'warn');
+            }
+          });
+        }
+      });
+    }
+
+
+    /**
+     * Vuelve a pedir los datos al servidor y repinta sin perder el scroll.
+     * @param {Function} [onDone]
+     */
+    function cpReloadData(onDone) {
+      cpRun('cpGetData', [], {
+        busy: false,
+        ok: function (data) {
+          var scroll = document.getElementById('cp-body').scrollTop;
+          cpApplyData(data);
+          cpSwitchTab(CP.tab, true);
+          document.getElementById('cp-body').scrollTop = scroll;
+          if (typeof onDone === 'function') onDone(data);
+        }
+      });
+    }
+
+
+    // ============================================================
+    // ===  Estado de carga y avisos  =============================
+    // ============================================================
+
+    function cpBusy(on, text) {
+      document.body.classList.toggle('is-busy', !!on);
+      var progress = document.getElementById('cp-progress');
+      if (progress) progress.classList.toggle('is-on', !!on);
+      var save = document.getElementById('cp-save');
+      if (save) save.disabled = !!on;
+
+      if (on && text) cpToast(text, 'loading', true, 'cp-loading-toast');
+      if (!on) cpDismiss('cp-loading-toast');
+    }
+
+    /**
+     * @param {string} message
+     * @param {'ok'|'error'|'warn'|'loading'} kind
+     * @param {boolean} [sticky]
+     * @param {string} [id]
+     */
+    function cpToast(message, kind, sticky, id) {
+      var container = document.getElementById('cp-toasts');
+      if (!container) return;
+
+      if (id) cpDismiss(id);
+
+      var toast = document.createElement('div');
+      toast.className = 'cp-toast cp-toast--' + (kind || 'ok');
+      if (id) toast.id = id;
+
+      var text = document.createElement('span');
+      text.textContent = message;
+      toast.appendChild(text);
+
+      var close = document.createElement('button');
+      close.type = 'button';
+      close.className = 'cp-toast-close';
+      close.setAttribute('aria-label', 'Cerrar aviso');
+      close.innerHTML = '&times;';
+      close.addEventListener('click', function () { toast.remove(); });
+      toast.appendChild(close);
+
+      container.appendChild(toast);
+
+      if (!sticky) {
+        window.setTimeout(function () {
+          toast.classList.add('is-leaving');
+          window.setTimeout(function () { toast.remove(); }, 220);
+        }, kind === 'error' ? 7000 : 4500);
+      }
+    }
+
+    function cpDismiss(id) {
+      var existing = document.getElementById(id);
+      if (existing) existing.remove();
+    }
+
+
+    // ============================================================
+    // ===  Utilidades de UI  =====================================
+    // ============================================================
+
+    function cpEsc(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    /** Convierte un enlace de Drive en la URL que puede mostrar un <img>. */
+    function cpThumbUrl(url) {
+      var value = String(url || '').trim();
+      if (!value) return '';
+
+      var patterns = [
+        /drive\.google\.com\/file\/d\/([^/]+)/,
+        /drive\.google\.com\/open\?id=([^&]+)/,
+        /drive\.google\.com\/uc\?.*id=([^&]+)/,
+        /drive\.google\.com\/thumbnail\?id=([^&]+)/
+      ];
+      for (var i = 0; i < patterns.length; i++) {
+        var match = value.match(patterns[i]);
+        if (match) return 'https://lh3.googleusercontent.com/d/' + match[1];
+      }
+      return /^https?:\/\//i.test(value) ? value : '';
+    }
+
+    /** Quita una miniatura rota y deja el hueco "Sin imagen". */
+    function cpImgFallback_(img) {
+      if (!img) return;
+      var box = img.parentElement;
+      if (box) box.classList.add('is-empty');
+      img.remove();
+    }
+
+    function cpSlug(text) {
+      return String(text || '')
+        .toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    }
+
+    /** Opciones de imagen para los selects de carrusel, características y programas. */
+    function cpImageOptions(selected) {
+      var options = ['<option value="">— Sin imagen —</option>'];
+      var found = false;
+
+      CP.model.images.forEach(function (image) {
+        var isSelected = image.ref === selected;
+        if (isSelected) found = true;
+        options.push(
+          '<option value="' + cpEsc(image.ref) + '"' + (isSelected ? ' selected' : '') + '>' +
+            cpEsc(image.ref) +
+          '</option>'
+        );
+      });
+
+      if (selected && !found) {
+        options.push('<option value="' + cpEsc(selected) + '" selected>' + cpEsc(selected) + ' (no encontrada)</option>');
+      }
+      return options.join('');
+    }
+
+    function cpImageThumb(ref) {
+      var found = CP.model.images.filter(function (image) { return image.ref === ref; })[0];
+      return found ? (found.thumb || cpThumbUrl(found.url)) : '';
+    }
+
+    function cpImageUsage(ref) {
+      var usage = (CP.data && CP.data.imageUsage) || {};
+      return usage[ref] || [];
+    }
+
+    function cpUniqueRef(base) {
+      var taken = {};
+      CP.model.images.forEach(function (image) { taken[String(image.ref).toLowerCase()] = true; });
+      var slug = cpSlug(base) || 'imagen';
+      var candidate = slug;
+      var suffix = 2;
+      while (taken[candidate.toLowerCase()]) {
+        candidate = slug + '-' + suffix;
+        suffix++;
+      }
+      return candidate;
+    }
+
+    /**
+     * Agrega al modelo una imagen recién subida (ya registrada en la hoja)
+     * y repinta la pestaña Imágenes para que aparezca en todas partes.
+     * @param {Object} image
+     */
+    function cpAppendImageToModel(image) {
+      if (!image) return;
+
+      // Conserva cualquier edición pendiente en las tarjetas de Imágenes.
+      if (typeof cpCollectImagesIntoModel === 'function') cpCollectImagesIntoModel();
+
+      CP.model.images.push({
+        ref: image.ref,
+        oldRef: image.ref,
+        url: image.url,
+        pos: image.pos || 'center',
+        source: image.source || '',
+        fit: image.fit || 'cover',
+        thumb: image.thumb || ''
+      });
+
+      cpRenderImages();
+    }
+
+    function cpMove(list, from, to) {
+      if (to < 0 || to >= list.length) return list;
+      var item = list.splice(from, 1)[0];
+      list.splice(to, 0, item);
+      return list;
+    }
+
+    /** Mantiene sincronizado el texto hexadecimal junto a un input de color. */
+    function cpSyncColorCode(target) {
+      if (!target || target.type !== 'color') return;
+      var code = target.parentElement.querySelector('code');
+      if (code) code.textContent = target.value;
+    }
+
+    /** Icono de Font Awesome tal como lo pinta el sitio. */
+    /**
+     * Devuelve las clases de Font Awesome para el icono de una red.
+     * Usa la misma lista de marcas que el sitio para que la vista previa
+     * coincida con lo que se publica.
+     */
+    var CP_BRAND_ICONS_ = {
+      'fa-facebook': 1, 'fa-facebook-f': 1, 'fa-facebook-messenger': 1,
+      'fa-instagram': 1, 'fa-whatsapp': 1, 'fa-tiktok': 1, 'fa-youtube': 1,
+      'fa-x-twitter': 1, 'fa-twitter': 1, 'fa-linkedin': 1, 'fa-linkedin-in': 1,
+      'fa-telegram': 1, 'fa-threads': 1, 'fa-snapchat': 1, 'fa-pinterest': 1,
+      'fa-spotify': 1, 'fa-discord': 1, 'fa-github': 1, 'fa-behance': 1,
+      'fa-dribbble': 1
+    };
+
+    function cpIconClass(icon) {
+      var value = String(icon || '').trim().toLowerCase() || 'fa-link';
+      if (value.indexOf('fa-') !== 0) value = 'fa-' + value;
+      value = value.replace(/[^a-z0-9-]/g, '');
+      return (CP_BRAND_ICONS_[value] ? 'fa-brands ' : 'fa-solid ') + value;
+    }
+
+
+    // ============================================================
+    // ===  Subida de imágenes (con compresión en el navegador)  ==
+    // ============================================================
+
+    function cpReadFileAsDataUrl(file) {
+      return new Promise(function (resolve, reject) {
+        var reader = new FileReader();
+        reader.onload = function () { resolve(reader.result); };
+        reader.onerror = function () { reject(new Error('No se pudo leer el archivo.')); };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    /**
+     * Reduce fotos grandes antes de subirlas (máx. 1600 px, JPEG 86 %).
+     * @param {File} file
+     * @return {Promise<{dataUrl: string, mime: string, name: string}>}
+     */
+    function cpPrepareUpload(file) {
+      return cpReadFileAsDataUrl(file).then(function (dataUrl) {
+        if (!/^image\//.test(file.type) || file.size <= 550 * 1024) {
+          return { dataUrl: dataUrl, mime: file.type || 'image/jpeg', name: file.name };
+        }
+
+        return new Promise(function (resolve) {
+          var image = new Image();
+          image.onload = function () {
+            var max = 1600;
+            var scale = Math.min(1, max / Math.max(image.width, image.height));
+            var canvas = document.createElement('canvas');
+            canvas.width = Math.round(image.width * scale);
+            canvas.height = Math.round(image.height * scale);
+
+            var context = canvas.getContext('2d');
+            var keepPng = file.type === 'image/png';
+            if (!keepPng) {
+              context.fillStyle = '#ffffff';
+              context.fillRect(0, 0, canvas.width, canvas.height);
+            }
+            context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+            var mime = keepPng ? 'image/png' : 'image/jpeg';
+            var extension = keepPng ? '.png' : '.jpg';
+            resolve({
+              dataUrl: canvas.toDataURL(mime, 0.86),
+              mime: mime,
+              name: file.name.replace(/\.[^.]+$/, '') + extension
+            });
+          };
+          image.onerror = function () {
+            resolve({ dataUrl: dataUrl, mime: file.type || 'image/jpeg', name: file.name });
+          };
+          image.src = dataUrl;
+        });
+      });
+    }
+
+    /**
+     * Sube un archivo y devuelve el resultado del servidor.
+     * @param {File} file
+     * @param {string} subPath
+     * @param {boolean} registerRef
+     * @return {Promise<Object>}
+     */
+    function cpUploadFile(file, subPath, registerRef) {
+      return cpPrepareUpload(file).then(function (payload) {
+        return new Promise(function (resolve, reject) {
+          google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(function (err) {
+              reject(new Error(err && err.message ? err.message : 'No se pudo subir la imagen.'));
+            })
+            .cpUploadImage(payload.dataUrl, payload.name, payload.mime, subPath || '', !!registerRef);
+        });
+      });
+    }
+
+    /** Sube varios archivos en serie y avisa del progreso. */
+    function cpUploadFiles(files, subPath, registerRef, onEach) {
+      var list = Array.prototype.slice.call(files || []);
+      if (!list.length) return;
+
+      cpBusy(true);
+
+      function next(index) {
+        if (index >= list.length) {
+          cpDismiss('cp-upload-toast');
+          cpBusy(false);
+          cpToast(list.length === 1 ? 'Imagen subida.' : list.length + ' imágenes subidas.', 'ok');
+          return;
+        }
+
+        cpToast('Subiendo ' + (index + 1) + ' de ' + list.length + ': ' + list[index].name, 'loading', true, 'cp-upload-toast');
+
+        cpUploadFile(list[index], subPath, registerRef)
+          .then(function (result) {
+            if (onEach) onEach(result);
+            next(index + 1);
+          })
+          .catch(function (err) {
+            cpToast('No se pudo subir «' + list[index].name + '»: ' + err.message, 'error');
+            next(index + 1);
+          });
+      }
+
+      next(0);
+    }
+
+
+    // ============================================================
+    // ===  Arranque diferido  ====================================
+    // ============================================================
+
+    cpInit();
+  </script>
+</body>
+
+</html>

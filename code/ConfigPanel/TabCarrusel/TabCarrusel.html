@@ -1,0 +1,187 @@
+<div class="cp-toolbar">
+  <button type="button" class="cp-btn cp-btn--primary" id="cp-car-add">Agregar diapositiva</button>
+  <span class="cp-hint">El orden de esta lista es el orden del carrusel.</span>
+  <span class="cp-spacer"></span>
+  <span class="cp-hint" id="cp-car-count"></span>
+</div>
+
+<div class="cp-rows" id="cp-car-rows"></div>
+
+<script>
+  function cpRenderCarousel() {
+    var container = document.getElementById('cp-car-rows');
+    var count = document.getElementById('cp-car-count');
+    if (!container) return;
+
+    if (!CP.model.carousel.length) {
+      container.innerHTML = '<div class="cp-empty">' +
+        '<strong>El carrusel está vacío</strong>' +
+        '<p>Agrega una diapositiva y elige una imagen de la pestaña Imágenes.</p>' +
+      '</div>';
+      if (count) count.textContent = '';
+      return;
+    }
+
+    container.innerHTML = CP.model.carousel.map(function (item, index) {
+      var thumb = cpImageThumb(item.image);
+      return '<article class="cp-row" data-index="' + index + '">' +
+        '<div class="cp-row-thumb ' + (thumb ? '' : 'is-empty') + '">' +
+          (thumb
+            ? '<img src="' + cpEsc(thumb) + '" alt="" loading="lazy" onerror="cpImgFallback_(this)">'
+            : '') +
+        '</div>' +
+
+        '<div class="cp-row-body">' +
+          '<div class="cp-fields">' +
+            '<label class="cp-field"><span>Título</span>' +
+              '<input type="text" data-car="title" value="' + cpEsc(item.title) + '" ' +
+                'placeholder="Opcional: se usa como texto alternativo">' +
+            '</label>' +
+            '<label class="cp-field"><span>Descripción</span>' +
+              '<input type="text" data-car="description" value="' + cpEsc(item.description) + '" ' +
+                'placeholder="Opcional: se usa como texto alternativo">' +
+            '</label>' +
+          '</div>' +
+
+          '<div class="cp-row-foot">' +
+            '<label class="cp-field" style="flex:1">' +
+              '<span>Imagen</span>' +
+              '<select data-car="image">' + cpImageOptions(item.image) + '</select>' +
+            '</label>' +
+            '<label class="cp-btn cp-btn--small cp-file" style="align-self:flex-end">' +
+              'Subir nueva' +
+              '<input type="file" accept="image/*" data-upload="carousel">' +
+            '</label>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="cp-order">' +
+          '<span class="cp-order-num">' + (index + 1) + '</span>' +
+          '<button type="button" class="cp-icon-btn" data-act="up" title="Subir" aria-label="Subir diapositiva">&#8593;</button>' +
+          '<button type="button" class="cp-icon-btn" data-act="down" title="Bajar" aria-label="Bajar diapositiva">&#8595;</button>' +
+          '<button type="button" class="cp-icon-btn is-danger" data-act="delete" title="Quitar" aria-label="Quitar diapositiva">&#10005;</button>' +
+        '</div>' +
+      '</article>';
+    }).join('');
+
+    if (count) {
+      count.textContent = CP.model.carousel.length +
+        (CP.model.carousel.length === 1 ? ' diapositiva' : ' diapositivas');
+    }
+  }
+
+  function cpCollectCarousel() {
+    var rows = [];
+    Array.prototype.forEach.call(document.querySelectorAll('#cp-car-rows .cp-row'), function (row) {
+      function value(name) {
+        var input = row.querySelector('[data-car="' + name + '"]');
+        return input ? input.value.trim() : '';
+      }
+      rows.push({ title: value('title'), description: value('description'), image: value('image') });
+    });
+    return rows;
+  }
+
+  function cpSyncCarouselModel() {
+    var rows = cpCollectCarousel();
+    if (rows.length === CP.model.carousel.length) CP.model.carousel = rows;
+  }
+
+  function cpSaveCarouselTab() {
+    cpSaveAndReload('cpSaveCarousel', [cpCollectCarousel()]);
+  }
+
+  function cpUpdateCarouselThumb(row) {
+    var select = row.querySelector('[data-car="image"]');
+    var thumb = cpImageThumb(select ? select.value : '');
+    var box = row.querySelector('.cp-row-thumb');
+    if (!box) return;
+
+    box.classList.toggle('is-empty', !thumb);
+    var img = box.querySelector('img');
+
+    if (!thumb) {
+      if (img) img.remove();
+      return;
+    }
+    if (!img) {
+      img = document.createElement('img');
+      img.alt = '';
+      img.loading = 'lazy';
+      img.onerror = function () { cpImgFallback_(img); };
+      box.appendChild(img);
+    }
+    img.src = thumb;
+  }
+
+  // ==================== Eventos ====================
+
+  document.getElementById('cp-car-rows').addEventListener('click', function (event) {
+    var button = event.target.closest('[data-act]');
+    if (!button) return;
+    var row = button.closest('.cp-row');
+    if (!row) return;
+
+    var index = Number(row.getAttribute('data-index'));
+    var action = button.getAttribute('data-act');
+
+    cpSyncCarouselModel();
+
+    if (action === 'up' || action === 'down') {
+      cpMove(CP.model.carousel, index, action === 'up' ? index - 1 : index + 1);
+      cpRenderCarousel();
+      cpMarkDirty();
+    }
+
+    if (action === 'delete') {
+      if (!window.confirm('¿Quitar esta diapositiva del carrusel?')) return;
+      CP.model.carousel.splice(index, 1);
+      cpRenderCarousel();
+      cpMarkDirty();
+    }
+  });
+
+  document.getElementById('cp-car-rows').addEventListener('change', function (event) {
+    var target = event.target;
+
+    if (target.getAttribute('data-car') === 'image') {
+      cpUpdateCarouselThumb(target.closest('.cp-row'));
+    }
+
+    if (target.getAttribute('data-upload') === 'carousel') {
+      var files = target.files;
+      var row = target.closest('.cp-row');
+      if (!files || !files.length) return;
+      target.value = '';
+
+      cpSyncCarouselModel();
+      cpUploadFiles(files, 'carousel', true, function (result) {
+        var image = result.image;
+        if (!image) return;
+
+        cpAppendImageToModel(image);
+
+        var select = row.querySelector('[data-car="image"]');
+        var option = document.createElement('option');
+        option.value = image.ref;
+        option.textContent = image.ref;
+        select.appendChild(option);
+        select.value = image.ref;
+
+        cpUpdateCarouselThumb(row);
+        cpMarkDirty();
+      });
+    }
+  });
+
+  document.getElementById('cp-car-add').addEventListener('click', function () {
+    cpSyncCarouselModel();
+    CP.model.carousel.push({ title: '', description: '', image: '' });
+    cpRenderCarousel();
+    cpMarkDirty();
+
+    var rows = document.querySelectorAll('#cp-car-rows .cp-row');
+    var last = rows[rows.length - 1];
+    if (last) last.querySelector('[data-car="title"]').focus();
+  });
+</script>

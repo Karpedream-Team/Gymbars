@@ -1,0 +1,44 @@
+{
+    "$schema": "https://opencode.ai/config.json",
+    "mcp": {
+        "context7": {
+            "type": "remote",
+            "url": "https://mcp.context7.com/mcp",
+            "headers": {
+                "CONTEXT7_API_KEY": "ctx7sk-27928443-7d1b-4478-80a7-a2ca17947dc7"
+            },
+            "enabled": true
+        },
+        "chrome-devtools-mcp": {
+            "type": "local",
+            "command": [
+                "npx",
+                "-y",
+                "chrome-devtools-mcp@latest"
+            ],
+            "enabled": true
+        },
+        "google-drive": {
+            "type": "local",
+            "command": [
+                "npx",
+                "@piotr-agier/google-drive-mcp"
+            ],
+            "env": {
+                "GOOGLE_DRIVE_OAUTH_CREDENTIALS": "$HOME/gcp-oauth.keys.json"
+            },
+            "enabled": true
+        },
+        "servers": {
+          "firebase": {
+            "type": "local",
+            "command": [
+              "npx",
+              "-y",
+              "firebase-tools@latest",
+              "mcp"
+            ]
+          }
+        }
+    }
+}

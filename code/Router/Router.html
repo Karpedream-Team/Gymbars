@@ -1,0 +1,63 @@
+<script>
+  // ====================== ROUTER / INICIALIZACIÓN ======================
+
+  window.addEventListener('load', function () {
+    renderNavbar();
+    renderHome();
+    renderFooter();
+    watchImages_();
+
+    handleRoute();
+    window.addEventListener('hashchange', handleRoute);
+
+    setupScrollSpy();
+  });
+
+  /**
+   * Rutas por hash:
+   *   #home           → portada
+   *   #programa/<id>  → abre el detalle de una rutina sobre la portada
+   */
+  function handleRoute() {
+    var hash = window.location.hash || '';
+
+    if (hash === '#admin' || hash.indexOf('#admin') === 0) {
+      var dest = typeof getAdminNavUrl === 'function' ? getAdminNavUrl() : 'https://gymbarsgt.com/admin';
+      window.open(dest, '_blank');
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+      return;
+    }
+
+    if (hash.indexOf('#programa/') === 0) {
+      var slug = decodeURIComponent(hash.substring(10));
+      openProgramModal(slug);
+      return;
+    }
+
+    // Cualquier otra ruta cierra el modal y deja la portada.
+    closeProgramModal(false);
+  }
+
+  /**
+   * Marca el enlace activo del navbar según la sección visible.
+   */
+  function setupScrollSpy() {
+    var sections = ['info', 'horario', 'programas', 'ubicacion']
+      .map(function (id) { return document.getElementById(id); })
+      .filter(Boolean);
+
+    if (!sections.length || typeof IntersectionObserver === 'undefined') return;
+
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        var id = entry.target.id;
+        setActiveLink(id === 'horario' ? 'info' : id);
+      });
+    }, { rootMargin: '-45% 0px -50% 0px', threshold: 0 });
+
+    sections.forEach(function (section) { observer.observe(section); });
+  }
+</script>

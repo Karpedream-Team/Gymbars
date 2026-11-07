@@ -1,0 +1,301 @@
+<div class="cp-toolbar">
+  <label class="cp-btn cp-btn--primary cp-file">
+    Subir imágenes
+    <input type="file" accept="image/*" multiple id="cp-img-upload">
+  </label>
+
+  <input type="text" list="cp-img-folders" id="cp-img-folder" class="cp-folder-input" data-no-dirty
+         placeholder="Carpeta (opcional): carousel, gallery…" aria-label="Carpeta de destino">
+  <datalist id="cp-img-folders"></datalist>
+
+  <button type="button" class="cp-btn" id="cp-img-add">Agregar referencia</button>
+
+  <span class="cp-spacer"></span>
+  <span class="cp-hint" id="cp-img-count"></span>
+</div>
+
+<div class="cp-img-grid" id="cp-img-grid"></div>
+
+<script>
+  function cpRenderImages() {
+    var grid = document.getElementById('cp-img-grid');
+    var count = document.getElementById('cp-img-count');
+    if (!grid) return;
+
+    cpFillFolderSuggestions_();
+
+    if (!CP.model.images.length) {
+      grid.innerHTML = '<div class="cp-empty" style="grid-column:1/-1">' +
+        '<strong>Todavía no hay imágenes</strong>' +
+        '<p>Sube una foto o crea una referencia y pega el enlace de Drive.</p>' +
+      '</div>';
+      if (count) count.textContent = '';
+      return;
+    }
+
+    grid.innerHTML = CP.model.images.map(cpImageCardHtml_).join('');
+    if (count) {
+      count.textContent = CP.model.images.length +
+        (CP.model.images.length === 1 ? ' referencia' : ' referencias');
+    }
+  }
+
+  /**
+   * @param {Object} image
+   * @param {number} index
+   * @return {string}
+   */
+  function cpImageCardHtml_(image, index) {
+    var thumb = image.thumb || cpThumbUrl(image.url);
+    var usage = cpImageUsage(image.oldRef || image.ref);
+    var used = usage.length > 0;
+
+    var classes = 'cp-img-thumb';
+    if (!thumb) classes += ' is-empty';
+    if (image.fit === 'contain') classes += ' is-contain';
+
+    return '<article class="cp-img-card" data-index="' + index + '"' +
+        ' data-old-ref="' + cpEsc(image.oldRef || '') + '">' +
+      '<div class="' + classes + '">' +
+        (thumb
+          ? '<img src="' + cpEsc(thumb) + '" alt="" loading="lazy" onerror="cpImgFallback_(this)">'
+          : '') +
+        '<span class="cp-thumb-fallback">Sin vista previa</span>' +
+      '</div>' +
+
+      '<div class="cp-img-card-body">' +
+        '<div class="cp-img-ref">' +
+          '<input type="text" data-img="ref" value="' + cpEsc(image.ref) + '" ' +
+            'placeholder="referencia" aria-label="Referencia de la imagen">' +
+          '<span class="cp-chip">referencia</span>' +
+        '</div>' +
+
+        '<div class="cp-input-row">' +
+          '<input type="text" data-img="url" value="' + cpEsc(image.url) + '" ' +
+            'placeholder="https://drive.google.com/file/d/…" aria-label="URL de la imagen">' +
+          '<button type="button" class="cp-btn cp-btn--small" data-act="pick">Elegir</button>' +
+        '</div>' +
+
+        '<div class="cp-img-grid-2">' +
+          '<label class="cp-mini-label">Posición' +
+            '<select data-img="pos" aria-label="Posición de la imagen">' +
+              cpOptions_([['center', 'Centro'], ['top', 'Arriba'], ['bottom', 'Abajo'], ['left', 'Izquierda'], ['right', 'Derecha']], image.pos) +
+            '</select>' +
+          '</label>' +
+          '<label class="cp-mini-label">Ajuste' +
+            '<select data-img="fit" aria-label="Ajuste de la imagen">' +
+              cpOptions_([['cover', 'Recortar'], ['contain', 'Completa']], image.fit) +
+            '</select>' +
+          '</label>' +
+        '</div>' +
+
+        '<label class="cp-mini-label">Archivo en Drive' +
+          '<input type="text" data-img="source" value="' + cpEsc(image.source) + '" ' +
+            'placeholder="branding/logo.jpg" aria-label="Ruta del archivo">' +
+        '</label>' +
+
+        '<div class="cp-img-foot">' +
+          '<span class="cp-usage ' + (used ? 'is-used' : 'is-free') + '">' +
+            (used ? 'Se usa en: ' + cpEsc(usage.join(' · ')) : 'Sin uso — puedes quitarla') +
+          '</span>' +
+          '<button type="button" class="cp-link" data-act="delete">Quitar</button>' +
+        '</div>' +
+      '</div>' +
+    '</article>';
+  }
+
+  function cpOptions_(pairs, selected) {
+    return pairs.map(function (pair) {
+      return '<option value="' + cpEsc(pair[0]) + '"' +
+        (pair[0] === selected ? ' selected' : '') + '>' + cpEsc(pair[1]) + '</option>';
+    }).join('');
+  }
+
+  function cpFillFolderSuggestions_() {
+    var list = document.getElementById('cp-img-folders');
+    if (!list) return;
+
+    var seen = {};
+    var folders = [];
+
+    CP.model.images.forEach(function (image) {
+      var source = String(image.source || '');
+      var slash = source.indexOf('/');
+      if (slash > -1) {
+        var folder = source.substring(0, slash);
+        if (folder && !seen[folder]) {
+          seen[folder] = true;
+          folders.push(folder);
+        }
+      }
+    });
+
+    list.innerHTML = folders.map(function (folder) {
+      return '<option value="' + cpEsc(folder) + '"></option>';
+    }).join('');
+  }
+
+  function cpCollectImages() {
+    var rows = [];
+    Array.prototype.forEach.call(document.querySelectorAll('#cp-img-grid .cp-img-card'), function (card) {
+      function value(name) {
+        var input = card.querySelector('[data-img="' + name + '"]');
+        return input ? input.value.trim() : '';
+      }
+      rows.push({
+        ref: value('ref'),
+        url: value('url'),
+        pos: value('pos'),
+        fit: value('fit'),
+        source: value('source'),
+        oldRef: card.getAttribute('data-old-ref') || ''
+      });
+    });
+    return rows;
+  }
+
+  function cpSaveImagesTab() {
+    cpSaveAndReload('cpSaveImages', [cpCollectImages()]);
+  }
+
+  function cpAddImageRow() {
+    cpCollectImagesIntoModel();
+    CP.model.images.push({
+      ref: cpUniqueRef('nueva-imagen'),
+      oldRef: '',
+      url: '',
+      pos: 'center',
+      source: '',
+      fit: 'cover',
+      thumb: ''
+    });
+    cpRenderImages();
+    cpMarkDirty();
+
+    var inputs = document.querySelectorAll('#cp-img-grid [data-img="ref"]');
+    var last = inputs[inputs.length - 1];
+    if (last) {
+      last.focus();
+      last.select();
+    }
+  }
+
+  function cpCollectImagesIntoModel() {
+    var collected = cpCollectImages();
+    if (collected.length === CP.model.images.length) {
+      CP.model.images = collected;
+    }
+  }
+
+  /**
+   * Refresca la miniatura cuando cambia la URL escrita a mano.
+   * @param {HTMLInputElement} input
+   */
+  function cpRefreshImageThumb(input) {
+    var card = input.closest('.cp-img-card');
+    if (!card) return;
+
+    var thumbBox = card.querySelector('.cp-img-thumb');
+    var url = cpThumbUrl(input.value);
+    var fit = card.querySelector('[data-img="fit"]');
+    var existing = thumbBox.querySelector('img');
+
+    thumbBox.classList.toggle('is-empty', !url);
+    thumbBox.classList.toggle('is-contain', fit && fit.value === 'contain');
+
+    if (!url) {
+      if (existing) existing.remove();
+      return;
+    }
+
+    if (!existing) {
+      existing = document.createElement('img');
+      existing.alt = '';
+      existing.loading = 'lazy';
+      existing.onerror = function () { cpImgFallback_(existing); };
+      thumbBox.insertBefore(existing, thumbBox.firstChild);
+    }
+    if (existing.getAttribute('src') !== url) existing.src = url;
+  }
+
+  function cpRemoveImageRow(card) {
+    var ref = card.querySelector('[data-img="ref"]').value.trim();
+    var oldRef = card.getAttribute('data-old-ref') || ref;
+    var usage = cpImageUsage(oldRef);
+
+    var message = usage.length
+      ? 'La imagen «' + oldRef + '» se usa en:\n\n' + usage.join('\n') +
+        '\n\nSi la quitas, esos lugares mostrarán el placeholder de la marca. ¿Quitarla de todos modos?'
+      : '¿Quitar la imagen «' + (oldRef || 'sin nombre') + '» de la lista?';
+
+    if (!window.confirm(message)) return;
+
+    cpCollectImagesIntoModel();
+    CP.model.images.splice(Number(card.getAttribute('data-index')), 1);
+    cpRenderImages();
+    cpMarkDirty();
+  }
+
+  function cpPickImageForCard(card) {
+    var source = card.querySelector('[data-img="source"]').value.trim();
+    var slash = source.lastIndexOf('/');
+    var path = slash > -1 ? source.substring(0, slash) : '';
+
+    cpOpenPicker({
+      title: 'Elegir imagen para «' + (card.querySelector('[data-img="ref"]').value.trim() || 'sin nombre') + '»',
+      path: path,
+      onPick: function (file) {
+        card.querySelector('[data-img="url"]').value = file.url;
+        card.querySelector('[data-img="source"]').value = file.path;
+        cpRefreshImageThumb(card.querySelector('[data-img="url"]'));
+        cpMarkDirty();
+      }
+    });
+  }
+
+  // ==================== Eventos de la pestaña ====================
+
+  document.getElementById('cp-img-grid').addEventListener('click', function (event) {
+    var button = event.target.closest('[data-act]');
+    if (!button) return;
+    var card = button.closest('.cp-img-card');
+    if (!card) return;
+
+    if (button.getAttribute('data-act') === 'pick') cpPickImageForCard(card);
+    if (button.getAttribute('data-act') === 'delete') cpRemoveImageRow(card);
+  });
+
+  document.getElementById('cp-img-grid').addEventListener('change', function (event) {
+    var input = event.target;
+    var card = input.closest('.cp-img-card');
+    if (!card) return;
+
+    if (input.getAttribute('data-img') === 'url') cpRefreshImageThumb(input);
+
+    if (input.getAttribute('data-img') === 'fit') {
+      var thumb = card.querySelector('.cp-img-thumb');
+      if (thumb) thumb.classList.toggle('is-contain', input.value === 'contain');
+    }
+  });
+
+  document.getElementById('cp-img-add').addEventListener('click', cpAddImageRow);
+
+  document.getElementById('cp-img-upload').addEventListener('change', function (event) {
+    var files = event.target.files;
+    var folder = document.getElementById('cp-img-folder').value.trim();
+    if (!files || !files.length) return;
+
+    event.target.value = '';
+
+    // Guarda en el modelo cualquier edición hecha en las tarjetas antes de
+    // volver a pintar la cuadrícula al terminar la subida.
+    cpCollectImagesIntoModel();
+
+    cpUploadFiles(files, folder, true, function (result) {
+      // El servidor registra la referencia al subir; así queda disponible
+      // de inmediato para Carrusel, Características y Programas.
+      cpAppendImageToModel(result.image);
+      cpMarkDirty();
+    });
+  });
+</script>

@@ -1,0 +1,330 @@
+<!-- ==================== HOME ==================== -->
+
+<!-- Carrusel -->
+<div class="hero-carousel" id="heroCarousel" aria-roledescription="carrusel" aria-label="Fotos del gimnasio">
+  <div class="hero-carousel-track" id="carouselTrack"></div>
+  <button class="carousel-arrow carousel-arrow--prev" id="carouselPrev" type="button" aria-label="Anterior">
+    <i class="fas fa-chevron-left"></i>
+  </button>
+  <button class="carousel-arrow carousel-arrow--next" id="carouselNext" type="button" aria-label="Siguiente">
+    <i class="fas fa-chevron-right"></i>
+  </button>
+  <div class="carousel-dots" id="carouselDots" role="tablist" aria-label="Seleccionar imagen"></div>
+</div>
+
+<!-- Información -->
+<section class="section section--alt" id="info">
+  <div class="container text-center">
+    <h1 class="section-title" id="siteName">Gymbars</h1>
+    <hr class="section-divider">
+    <p class="section-lead" id="siteTagline"></p>
+
+    <div class="features-grid" id="featuresGrid"></div>
+  </div>
+</section>
+
+<!-- Horario y contacto -->
+<section class="section" id="horario">
+  <div class="container">
+    <div class="two-columns">
+      <div class="column">
+        <h2 class="subsection-title text-center" id="scheduleTitle">Horario</h2>
+        <div class="schedule" id="scheduleTable"></div>
+      </div>
+
+      <div class="column">
+        <h2 class="subsection-title text-center" id="contactTitle">Contacto</h2>
+        <div class="contact-card" id="contactCard"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Programas -->
+<section class="section section--alt" id="programas">
+  <div class="container text-center">
+    <h1 class="section-title" id="programsTitle">Rutinas de Calistenia</h1>
+    <hr class="section-divider">
+    <div class="programs-grid" id="programsGrid"></div>
+  </div>
+</section>
+
+<!-- Ubicación -->
+<section class="section" id="ubicacion">
+  <div class="container text-center">
+    <h1 class="section-title" id="locationTitle">Ubicación</h1>
+    <hr class="section-divider">
+    <div class="address" id="addressBlock"></div>
+    <div class="map-wrapper" id="mapWrapper"></div>
+  </div>
+</section>
+
+<script>
+  // ==================== HOME PAGE ====================
+
+  function renderHome() {
+    renderCarousel();
+    renderInfo();
+    renderSchedule();
+    renderContact();
+    renderPrograms();
+    renderLocation();
+  }
+
+  // ---------- Carrusel ----------
+  let carouselState = { index: 0, count: 0, timer: null };
+
+  function renderCarousel() {
+    const track = document.getElementById('carouselTrack');
+    const dots = document.getElementById('carouselDots');
+    const wrap = document.getElementById('heroCarousel');
+
+    if (!carouselItems.length) {
+      wrap.style.display = 'none';
+      return;
+    }
+
+    track.innerHTML = carouselItems.map((item, i) => {
+      const label = item.title || item.description || ('Imagen ' + (i + 1));
+
+      return '<figure class="carousel-slide' + (i === 0 ? ' is-active' : '') + '" role="group" ' +
+             'aria-roledescription="diapositiva" aria-label="' + escapeHtml_(label) + '">' +
+               '<div class="media' + (item.image ? '' : ' media--empty') + '">' +
+                 imageMarkup_(item.image, label, { pos: item.pos, fit: item.fit, eager: i === 0 }) +
+               '</div>' +
+             '</figure>';
+    }).join('');
+
+    dots.innerHTML = carouselItems.map((item, i) =>
+      '<button class="carousel-dot' + (i === 0 ? ' is-active' : '') + '" type="button" role="tab" ' +
+        'aria-label="' + escapeHtml_('Ir a la imagen ' + (i + 1)) + '" aria-selected="' + (i === 0) + '" ' +
+        'data-index="' + i + '"></button>'
+    ).join('');
+
+    carouselState.count = carouselItems.length;
+    carouselState.index = 0;
+
+    document.getElementById('carouselPrev').addEventListener('click', () => moveCarousel(-1, true));
+    document.getElementById('carouselNext').addEventListener('click', () => moveCarousel(1, true));
+
+    dots.querySelectorAll('.carousel-dot').forEach(dot => {
+      dot.addEventListener('click', () => goToSlide(parseInt(dot.getAttribute('data-index'), 10), true));
+    });
+
+    // Pausa al pasar el mouse / al tocar, y reanuda al salir.
+    wrap.addEventListener('mouseenter', stopCarousel);
+    wrap.addEventListener('mouseleave', startCarousel);
+
+    // Gestos táctiles
+    let touchStartX = null;
+    wrap.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].clientX; }, { passive: true });
+    wrap.addEventListener('touchend', e => {
+      if (touchStartX === null) return;
+      const delta = e.changedTouches[0].clientX - touchStartX;
+      if (Math.abs(delta) > 40) moveCarousel(delta < 0 ? 1 : -1, true);
+      touchStartX = null;
+    }, { passive: true });
+
+    document.addEventListener('keydown', e => {
+      if (document.querySelector('.program-modal.is-open')) return;
+      if (e.key === 'ArrowLeft') moveCarousel(-1, true);
+      if (e.key === 'ArrowRight') moveCarousel(1, true);
+    });
+
+    if (carouselItems.length > 1) startCarousel();
+  }
+
+  function moveCarousel(direction, manual) {
+    goToSlide((carouselState.index + direction + carouselState.count) % carouselState.count, manual);
+  }
+
+  function goToSlide(index, manual) {
+    const slides = document.querySelectorAll('.carousel-slide');
+    const dots = document.querySelectorAll('.carousel-dot');
+    if (!slides.length) return;
+
+    slides[carouselState.index].classList.remove('is-active');
+    if (dots[carouselState.index]) dots[carouselState.index].classList.remove('is-active');
+
+    carouselState.index = index;
+
+    slides[index].classList.add('is-active');
+    if (dots[index]) {
+      dots[index].classList.add('is-active');
+      dots[index].setAttribute('aria-selected', 'true');
+    }
+    document.querySelectorAll('.carousel-dot').forEach((dot, i) => {
+      if (i !== index) dot.setAttribute('aria-selected', 'false');
+    });
+
+    if (manual) {
+      stopCarousel();
+      startCarousel();
+    }
+  }
+
+  function startCarousel() {
+    stopCarousel();
+    if (carouselState.count < 2) return;
+    carouselState.timer = setInterval(() => moveCarousel(1, false), 5000);
+  }
+
+  function stopCarousel() {
+    if (carouselState.timer) {
+      clearInterval(carouselState.timer);
+      carouselState.timer = null;
+    }
+  }
+
+  // ---------- Información ----------
+  function renderInfo() {
+    document.getElementById('siteName').textContent = site.nombre || 'Gymbars';
+    document.getElementById('siteTagline').textContent = site.lema || '';
+
+    const grid = document.getElementById('featuresGrid');
+    if (!features.length) {
+      grid.style.display = 'none';
+      return;
+    }
+
+    grid.innerHTML = features.map(feature => {
+      const alt = feature.title || feature.description || 'Gymbars';
+      const media = feature.image || feature.description || feature.title
+        ? '<div class="feature-media media' + (feature.image ? '' : ' media--empty') + '">' +
+            imageMarkup_(feature.image, alt, { pos: feature.pos, fit: feature.fit }) +
+          '</div>'
+        : '';
+
+      return '<article class="feature-card">' +
+        media +
+        (feature.title ? '<h3 class="feature-title">' + escapeHtml_(feature.title) + '</h3>' : '') +
+        (feature.description ? '<p class="feature-desc">' + escapeHtml_(feature.description) + '</p>' : '') +
+      '</article>';
+    }).join('');
+  }
+
+  // ---------- Horario ----------
+  function renderSchedule() {
+    document.getElementById('scheduleTitle').textContent = site.horarioTitulo || 'Horario';
+
+    const table = document.getElementById('scheduleTable');
+    if (!schedule.length) {
+      table.innerHTML = '<p class="muted">Horario pendiente de publicar.</p>';
+      return;
+    }
+
+    table.innerHTML = schedule.map(group => {
+      const rows = group.shifts.length
+        ? group.shifts.map(shift =>
+            '<div class="schedule-row">' +
+              (shift.label ? '<span class="schedule-shift">' + escapeHtml_(shift.label) + '</span>' : '') +
+              '<span class="schedule-time">' + escapeHtml_(shift.time) + '</span>' +
+            '</div>'
+          ).join('')
+        : '<div class="schedule-row"><span class="schedule-time">Cerrado</span></div>';
+
+      return '<div class="schedule-group">' +
+        '<div class="schedule-day" style="background-color:' + escapeHtml_(group.color) + '">' + escapeHtml_(group.day) + '</div>' +
+        rows +
+      '</div>';
+    }).join('');
+  }
+
+  // ---------- Contacto ----------
+  function renderContact() {
+    document.getElementById('contactTitle').textContent = site.contactoTitulo || 'Contacto';
+
+    const card = document.getElementById('contactCard');
+    const phoneHtml = site.telefono
+      ? '<div class="contact-block">' +
+          '<h3 class="contact-heading"><i class="fas fa-phone-volume"></i> Teléfono</h3>' +
+          '<a class="contact-phone" href="tel:' + escapeHtml_(site.telefonoDigits || site.telefono) + '">' +
+            escapeHtml_(site.telefono) +
+          '</a>' +
+        '</div>'
+      : '';
+
+    const socialHtml = social.length
+      ? '<div class="contact-block">' +
+          '<h3 class="contact-heading">Redes Sociales</h3>' +
+          '<ul class="contact-social">' +
+            social.map(item =>
+              '<li>' +
+                '<a href="' + escapeHtml_(item.url) + '" target="_blank" rel="noopener">' +
+                  '<i class="' + iconClass_(item.icon) + '"></i>' +
+                  '<span>' + escapeHtml_(item.name) + '</span>' +
+                '</a>' +
+              '</li>'
+            ).join('') +
+          '</ul>' +
+        '</div>'
+      : '';
+
+    card.innerHTML = phoneHtml + socialHtml;
+
+    if (!card.innerHTML.trim()) {
+      card.innerHTML = '<p class="muted">Información de contacto pendiente.</p>';
+    }
+  }
+
+  // ---------- Programas ----------
+  function renderPrograms() {
+    document.getElementById('programsTitle').textContent = site.programasTitulo || 'Rutinas de Calistenia';
+
+    const grid = document.getElementById('programsGrid');
+    if (!programs.length) {
+      grid.innerHTML = '<p class="muted">Rutinas pendientes de publicar.</p>';
+      return;
+    }
+
+    grid.innerHTML = programs.map(program =>
+      '<article class="program-card">' +
+        '<button class="program-button" type="button" data-slug="' + escapeHtml_(program.slug) + '" ' +
+                'aria-label="Ver rutina ' + escapeHtml_(program.title) + '">' +
+          '<div class="program-media media' + (program.image ? '' : ' media--empty') + '">' +
+            imageMarkup_(program.image, program.title, { pos: program.pos, fit: program.fit }) +
+          '</div>' +
+          '<h3 class="program-title">' + escapeHtml_(program.title) + '</h3>' +
+          '<span class="program-cta">Ver rutina <i class="fas fa-arrow-right"></i></span>' +
+        '</button>' +
+      '</article>'
+    ).join('');
+
+    grid.querySelectorAll('.program-button').forEach(button => {
+      button.addEventListener('click', () => {
+        window.location.hash = 'programa/' + button.getAttribute('data-slug');
+      });
+    });
+  }
+
+  // ---------- Ubicación ----------
+  function renderLocation() {
+    document.getElementById('locationTitle').textContent = site.ubicacionTitulo || 'Ubicación';
+
+    const lines = [site.direccion1, site.direccion2, site.direccion3].filter(Boolean);
+    document.getElementById('addressBlock').innerHTML = lines.length
+      ? lines.map((line, i) => '<p class="address-line' + (i === lines.length - 1 ? ' address-line--muted' : '') + '">' + escapeHtml_(line) + '</p>').join('')
+      : '';
+
+    const map = document.getElementById('mapWrapper');
+    if (!site.mapaUrl) {
+      map.style.display = 'none';
+      return;
+    }
+
+    map.innerHTML =
+      '<iframe title="Mapa de ' + escapeHtml_(site.nombre || 'Gymbars') + '" ' +
+        'src="' + escapeHtml_(site.mapaUrl) + '" ' +
+        'loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>';
+
+    var existingLink = document.querySelector('.map-link');
+    if (existingLink) existingLink.parentElement.removeChild(existingLink);
+
+    if (site.mapaEnlace) {
+      map.insertAdjacentHTML('afterend',
+        '<a class="map-link" href="' + escapeHtml_(site.mapaEnlace) + '" target="_blank" rel="noopener">' +
+          'Abrir en Google Maps <i class="fas fa-external-link-alt"></i>' +
+        '</a>');
+    }
+  }
+</script>

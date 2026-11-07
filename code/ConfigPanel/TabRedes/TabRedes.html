@@ -1,0 +1,146 @@
+<div class="cp-toolbar">
+  <button type="button" class="cp-btn cp-btn--primary" id="cp-social-add">Agregar red</button>
+  <span class="cp-hint">Se muestran en el pie, la tarjeta de contacto y el navbar (Facebook e Instagram).</span>
+  <span class="cp-spacer"></span>
+  <span class="cp-hint" id="cp-social-count"></span>
+</div>
+
+<datalist id="cp-icons">
+  <option value="fa-facebook"></option>
+  <option value="fa-instagram"></option>
+  <option value="fa-facebook-messenger"></option>
+  <option value="fa-whatsapp"></option>
+  <option value="fa-tiktok"></option>
+  <option value="fa-youtube"></option>
+  <option value="fa-x-twitter"></option>
+  <option value="fa-linkedin"></option>
+  <option value="fa-telegram"></option>
+  <option value="fa-threads"></option>
+  <option value="fa-snapchat"></option>
+  <option value="fa-pinterest"></option>
+  <option value="fa-spotify"></option>
+  <option value="fa-discord"></option>
+</datalist>
+
+<div id="cp-social-rows"></div>
+
+<script>
+  function cpRenderSocial() {
+    var container = document.getElementById('cp-social-rows');
+    var count = document.getElementById('cp-social-count');
+    if (!container) return;
+
+    if (!CP.model.social.length) {
+      container.innerHTML = '<div class="cp-empty">' +
+        '<strong>No hay redes sociales</strong>' +
+        '<p>Agrega un enlace con su icono de Font Awesome.</p>' +
+      '</div>';
+      if (count) count.textContent = '';
+      return;
+    }
+
+    container.innerHTML = CP.model.social.map(function (item, index) {
+      return '<div class="cp-social-row" data-index="' + index + '">' +
+        '<span class="cp-social-icon" aria-hidden="true">' +
+          '<i class="' + cpEsc(cpIconClass(item.icon)) + '" data-icon-preview></i>' +
+        '</span>' +
+
+        '<input type="text" data-social="name" value="' + cpEsc(item.name) + '" ' +
+          'placeholder="Instagram" aria-label="Nombre de la red">' +
+
+        '<input type="text" list="cp-icons" data-social="icon" value="' + cpEsc(item.icon) + '" ' +
+          'placeholder="fa-instagram" aria-label="Icono de Font Awesome">' +
+
+        '<input type="url" data-social="url" class="cp-social-url" value="' + cpEsc(item.url) + '" ' +
+          'placeholder="https://instagram.com/…" aria-label="Enlace de la red">' +
+
+        '<div style="display:flex;gap:3px">' +
+          '<button type="button" class="cp-icon-btn" data-act="up" title="Subir" aria-label="Subir red">&#8593;</button>' +
+          '<button type="button" class="cp-icon-btn" data-act="down" title="Bajar" aria-label="Bajar red">&#8595;</button>' +
+          '<button type="button" class="cp-icon-btn is-danger" data-act="delete" title="Quitar" aria-label="Quitar red">&#10005;</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    if (count) {
+      count.textContent = CP.model.social.length +
+        (CP.model.social.length === 1 ? ' red' : ' redes');
+    }
+  }
+
+  function cpCollectSocial() {
+    var rows = [];
+    Array.prototype.forEach.call(document.querySelectorAll('#cp-social-rows .cp-social-row'), function (row) {
+      function value(name) {
+        var input = row.querySelector('[data-social="' + name + '"]');
+        return input ? input.value.trim() : '';
+      }
+      rows.push({ name: value('name'), icon: value('icon'), url: value('url') });
+    });
+    return rows;
+  }
+
+  function cpSyncSocialModel() {
+    var rows = cpCollectSocial();
+    if (rows.length === CP.model.social.length) CP.model.social = rows;
+  }
+
+  function cpSaveSocialTab() {
+    cpSaveAndReload('cpSaveSocial', [cpCollectSocial()]);
+  }
+
+  function cpUpdateSocialIcon(row) {
+    var input = row.querySelector('[data-social="icon"]');
+    var preview = row.querySelector('[data-icon-preview]');
+    if (!input || !preview) return;
+    preview.className = cpIconClass(input.value);
+  }
+
+  // ==================== Eventos ====================
+
+  document.getElementById('cp-social-rows').addEventListener('input', function (event) {
+    if (event.target.getAttribute('data-social') !== 'icon') return;
+    cpUpdateSocialIcon(event.target.closest('.cp-social-row'));
+  });
+
+  document.getElementById('cp-social-rows').addEventListener('change', function (event) {
+    if (event.target.getAttribute('data-social') !== 'icon') return;
+    cpUpdateSocialIcon(event.target.closest('.cp-social-row'));
+  });
+
+  document.getElementById('cp-social-rows').addEventListener('click', function (event) {
+    var button = event.target.closest('[data-act]');
+    if (!button) return;
+    var row = button.closest('.cp-social-row');
+    if (!row) return;
+
+    var index = Number(row.getAttribute('data-index'));
+    var action = button.getAttribute('data-act');
+
+    cpSyncSocialModel();
+
+    if (action === 'up' || action === 'down') {
+      cpMove(CP.model.social, index, action === 'up' ? index - 1 : index + 1);
+      cpRenderSocial();
+      cpMarkDirty();
+    }
+
+    if (action === 'delete') {
+      if (!window.confirm('¿Quitar esta red social?')) return;
+      CP.model.social.splice(index, 1);
+      cpRenderSocial();
+      cpMarkDirty();
+    }
+  });
+
+  document.getElementById('cp-social-add').addEventListener('click', function () {
+    cpSyncSocialModel();
+    CP.model.social.push({ name: '', icon: 'fa-instagram', url: '' });
+    cpRenderSocial();
+    cpMarkDirty();
+
+    var rows = document.querySelectorAll('#cp-social-rows .cp-social-row');
+    var last = rows[rows.length - 1];
+    if (last) last.querySelector('[data-social="name"]').focus();
+  });
+</script>

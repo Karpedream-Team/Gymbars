@@ -1,0 +1,185 @@
+<div class="cp-toolbar">
+  <button type="button" class="cp-btn cp-btn--primary" id="cp-feat-add">Agregar bloque</button>
+  <span class="cp-hint">Se muestran en fila sobre la portada. El orden de la lista es el orden en el sitio.</span>
+  <span class="cp-spacer"></span>
+  <span class="cp-hint" id="cp-feat-count"></span>
+</div>
+
+<div class="cp-rows" id="cp-feat-rows"></div>
+
+<script>
+  function cpRenderFeatures() {
+    var container = document.getElementById('cp-feat-rows');
+    var count = document.getElementById('cp-feat-count');
+    if (!container) return;
+
+    if (!CP.model.features.length) {
+      container.innerHTML = '<div class="cp-empty">' +
+        '<strong>No hay características</strong>' +
+        '<p>Agrega un bloque con su imagen y descripción.</p>' +
+      '</div>';
+      if (count) count.textContent = '';
+      return;
+    }
+
+    container.innerHTML = CP.model.features.map(function (item, index) {
+      var thumb = cpImageThumb(item.image);
+      return '<article class="cp-row" data-index="' + index + '">' +
+        '<div class="cp-row-thumb ' + (thumb ? '' : 'is-empty') + '">' +
+          (thumb
+            ? '<img src="' + cpEsc(thumb) + '" alt="" loading="lazy" onerror="cpImgFallback_(this)">'
+            : '') +
+        '</div>' +
+
+        '<div class="cp-row-body">' +
+          '<div class="cp-fields">' +
+            '<label class="cp-field"><span>Título</span>' +
+              '<input type="text" data-feat="title" value="' + cpEsc(item.title) + '" placeholder="Entrenamiento guiado">' +
+            '</label>' +
+            '<label class="cp-field"><span>Descripción</span>' +
+              '<input type="text" data-feat="description" value="' + cpEsc(item.description) + '" placeholder="Texto corto que acompaña al título">' +
+            '</label>' +
+          '</div>' +
+
+          '<div class="cp-row-foot">' +
+            '<label class="cp-field" style="flex:1">' +
+              '<span>Imagen</span>' +
+              '<select data-feat="image">' + cpImageOptions(item.image) + '</select>' +
+            '</label>' +
+            '<label class="cp-btn cp-btn--small cp-file" style="align-self:flex-end">' +
+              'Subir nueva' +
+              '<input type="file" accept="image/*" data-upload="feature">' +
+            '</label>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="cp-order">' +
+          '<span class="cp-order-num">' + (index + 1) + '</span>' +
+          '<button type="button" class="cp-icon-btn" data-act="up" title="Subir" aria-label="Subir bloque">&#8593;</button>' +
+          '<button type="button" class="cp-icon-btn" data-act="down" title="Bajar" aria-label="Bajar bloque">&#8595;</button>' +
+          '<button type="button" class="cp-icon-btn is-danger" data-act="delete" title="Quitar" aria-label="Quitar bloque">&#10005;</button>' +
+        '</div>' +
+      '</article>';
+    }).join('');
+
+    if (count) {
+      count.textContent = CP.model.features.length +
+        (CP.model.features.length === 1 ? ' bloque' : ' bloques');
+    }
+  }
+
+  function cpCollectFeatures() {
+    var rows = [];
+    Array.prototype.forEach.call(document.querySelectorAll('#cp-feat-rows .cp-row'), function (row) {
+      function value(name) {
+        var input = row.querySelector('[data-feat="' + name + '"]');
+        return input ? input.value.trim() : '';
+      }
+      rows.push({ title: value('title'), description: value('description'), image: value('image') });
+    });
+    return rows;
+  }
+
+  function cpSyncFeaturesModel() {
+    var rows = cpCollectFeatures();
+    if (rows.length === CP.model.features.length) CP.model.features = rows;
+  }
+
+  function cpSaveFeaturesTab() {
+    cpSaveAndReload('cpSaveFeatures', [cpCollectFeatures()]);
+  }
+
+  function cpUpdateFeatureThumb(row) {
+    var select = row.querySelector('[data-feat="image"]');
+    var thumb = cpImageThumb(select ? select.value : '');
+    var box = row.querySelector('.cp-row-thumb');
+    if (!box) return;
+
+    box.classList.toggle('is-empty', !thumb);
+    var img = box.querySelector('img');
+
+    if (!thumb) {
+      if (img) img.remove();
+      return;
+    }
+    if (!img) {
+      img = document.createElement('img');
+      img.alt = '';
+      img.loading = 'lazy';
+      img.onerror = function () { cpImgFallback_(img); };
+      box.appendChild(img);
+    }
+    img.src = thumb;
+  }
+
+  // ==================== Eventos ====================
+
+  document.getElementById('cp-feat-rows').addEventListener('click', function (event) {
+    var button = event.target.closest('[data-act]');
+    if (!button) return;
+    var row = button.closest('.cp-row');
+    if (!row) return;
+
+    var index = Number(row.getAttribute('data-index'));
+    var action = button.getAttribute('data-act');
+
+    cpSyncFeaturesModel();
+
+    if (action === 'up' || action === 'down') {
+      cpMove(CP.model.features, index, action === 'up' ? index - 1 : index + 1);
+      cpRenderFeatures();
+      cpMarkDirty();
+    }
+
+    if (action === 'delete') {
+      if (!window.confirm('¿Quitar este bloque de características?')) return;
+      CP.model.features.splice(index, 1);
+      cpRenderFeatures();
+      cpMarkDirty();
+    }
+  });
+
+  document.getElementById('cp-feat-rows').addEventListener('change', function (event) {
+    var target = event.target;
+
+    if (target.getAttribute('data-feat') === 'image') {
+      cpUpdateFeatureThumb(target.closest('.cp-row'));
+    }
+
+    if (target.getAttribute('data-upload') === 'feature') {
+      var files = target.files;
+      var row = target.closest('.cp-row');
+      if (!files || !files.length) return;
+      target.value = '';
+
+      cpSyncFeaturesModel();
+      cpUploadFiles(files, 'features', true, function (result) {
+        var image = result.image;
+        if (!image) return;
+
+        cpAppendImageToModel(image);
+
+        var select = row.querySelector('[data-feat="image"]');
+        var option = document.createElement('option');
+        option.value = image.ref;
+        option.textContent = image.ref;
+        select.appendChild(option);
+        select.value = image.ref;
+
+        cpUpdateFeatureThumb(row);
+        cpMarkDirty();
+      });
+    }
+  });
+
+  document.getElementById('cp-feat-add').addEventListener('click', function () {
+    cpSyncFeaturesModel();
+    CP.model.features.push({ title: '', description: '', image: '' });
+    cpRenderFeatures();
+    cpMarkDirty();
+
+    var rows = document.querySelectorAll('#cp-feat-rows .cp-row');
+    var last = rows[rows.length - 1];
+    if (last) last.querySelector('[data-feat="title"]').focus();
+  });
+</script>

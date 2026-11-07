@@ -1,0 +1,129 @@
+<div class="cp-toolbar">
+  <p class="cp-hint">Estos datos alimentan la portada, la tarjeta de contacto, el horario y el pie de página.</p>
+</div>
+
+<div id="cp-site-groups"></div>
+
+<datalist id="cp-fonts">
+  <option value="Roboto"></option>
+  <option value="Inter"></option>
+  <option value="Poppins"></option>
+  <option value="Montserrat"></option>
+  <option value="Lato"></option>
+  <option value="Open Sans"></option>
+  <option value="Nunito"></option>
+  <option value="Raleway"></option>
+  <option value="Work Sans"></option>
+  <option value="Oswald"></option>
+  <option value="Playfair Display"></option>
+</datalist>
+
+<script>
+  function cpRenderSite() {
+    var container = document.getElementById('cp-site-groups');
+    if (!container || !CP.data) return;
+
+    var values = {};
+    var order = [];
+    CP.model.site.forEach(function (row) {
+      values[row.key] = row.value;
+      order.push(row.key);
+    });
+
+    var known = {};
+    var html = '';
+
+    (CP.data.siteGroups || []).forEach(function (group) {
+      html += '<section class="cp-panel">' +
+        '<div class="cp-panel-head">' +
+          '<div><h2>' + cpEsc(group.title) + '</h2>' +
+          (group.description ? '<p>' + cpEsc(group.description) + '</p>' : '') +
+          '</div>' +
+        '</div>' +
+        '<div class="cp-fields">' +
+          group.fields.map(function (field) {
+            known[field.key] = true;
+            return cpSiteFieldHtml_(field, values[field.key] || '');
+          }).join('') +
+        '</div>' +
+      '</section>';
+    });
+
+    var extras = CP.model.site.filter(function (row) {
+      return row.key && !known[row.key];
+    });
+
+    if (extras.length) {
+      html += '<section class="cp-panel">' +
+        '<div class="cp-panel-head">' +
+          '<div><h2>Otras claves de la hoja</h2>' +
+          '<p>Estas claves existen en la pestaña Sitio pero el panel no las conoce. Puedes editarlas igual.</p></div>' +
+        '</div>' +
+        '<div class="cp-fields">' +
+          extras.map(function (row) {
+            return cpSiteFieldHtml_({ key: row.key, label: row.key, type: 'text' }, row.value);
+          }).join('') +
+        '</div>' +
+      '</section>';
+    }
+
+    container.innerHTML = html;
+  }
+
+  /**
+   * @param {Object} field
+   * @param {string} value
+   * @return {string}
+   */
+  function cpSiteFieldHtml_(field, value) {
+    var wide = field.wide || field.type === 'textarea' || field.type === 'url' ? ' is-wide' : '';
+    var help = field.help ? '<small class="cp-field-help">' + cpEsc(field.help) + '</small>' : '';
+    var key = cpEsc(field.key);
+    var control;
+
+    if (field.type === 'textarea') {
+      control = '<textarea rows="' + (field.rows || 3) + '" data-site-key="' + key + '" ' +
+        'placeholder="' + cpEsc(field.placeholder || '') + '">' + cpEsc(value) + '</textarea>';
+    } else if (field.type === 'color') {
+      var hex = cpNormalizeHex_(value);
+      control = '<span class="cp-color">' +
+        '<input type="color" data-site-key="' + key + '" value="' + cpEsc(hex) + '" aria-label="' + cpEsc(field.label) + '">' +
+        '<code>' + cpEsc(hex) + '</code>' +
+      '</span>';
+    } else if (field.type === 'font') {
+      control = '<input type="text" list="cp-fonts" data-site-key="' + key + '" value="' + cpEsc(value) + '" placeholder="Roboto">';
+    } else {
+      var type = field.type === 'tel' ? 'tel' : (field.type === 'url' ? 'url' : 'text');
+      control = '<input type="' + type + '" data-site-key="' + key + '" value="' + cpEsc(value) + '" ' +
+        'placeholder="' + cpEsc(field.placeholder || '') + '">';
+    }
+
+    return '<label class="cp-field' + wide + '">' +
+      '<span>' + cpEsc(field.label) + '</span>' +
+      control +
+      help +
+    '</label>';
+  }
+
+  /** Acepta #abc y devuelve #AABBCC para el input de color. */
+  function cpNormalizeHex_(value) {
+    var hex = String(value || '').trim();
+    if (/^#[0-9A-Fa-f]{3}$/.test(hex)) {
+      return '#' + hex.charAt(1) + hex.charAt(1) + hex.charAt(2) + hex.charAt(2) + hex.charAt(3) + hex.charAt(3);
+    }
+    if (/^#[0-9A-Fa-f]{6}$/.test(hex)) return hex;
+    return '#000000';
+  }
+
+  function cpCollectSite() {
+    var rows = [];
+    Array.prototype.forEach.call(document.querySelectorAll('#pane-sitio [data-site-key]'), function (input) {
+      rows.push({ key: input.getAttribute('data-site-key'), value: input.value });
+    });
+    return rows;
+  }
+
+  function cpSaveSiteTab() {
+    cpSaveAndReload('cpSaveSite', [cpCollectSite()]);
+  }
+</script>

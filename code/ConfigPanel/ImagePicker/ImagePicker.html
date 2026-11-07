@@ -1,0 +1,158 @@
+<div class="cp-modal" id="cp-picker" role="dialog" aria-modal="true" aria-labelledby="cp-picker-title" aria-hidden="true">
+  <div class="cp-modal-card">
+    <div class="cp-modal-head">
+      <h3 id="cp-picker-title">Elegir imagen</h3>
+      <button type="button" class="cp-modal-close" id="cp-picker-close" aria-label="Cerrar">&times;</button>
+    </div>
+
+    <div class="cp-picker-bar">
+      <button type="button" class="cp-btn cp-btn--small" id="cp-picker-up" hidden>&#8593; Subir</button>
+      <span class="cp-picker-path" id="cp-picker-path"></span>
+      <span class="cp-hint" id="cp-picker-count"></span>
+    </div>
+
+    <div class="cp-picker-grid" id="cp-picker-grid"></div>
+  </div>
+</div>
+
+<script>
+  var CP_PICKER_DATA = null;
+
+  /**
+   * Abre el selector de imágenes de Drive.
+   * @param {{title?: string, path?: string, onPick: Function}} options
+   */
+  function cpOpenPicker(options) {
+    options = options || {};
+
+    CP.picker = {
+      title: options.title || 'Elegir imagen',
+      path: options.path || '',
+      onPick: typeof options.onPick === 'function' ? options.onPick : function () {}
+    };
+
+    var modal = document.getElementById('cp-picker');
+    document.getElementById('cp-picker-title').textContent = CP.picker.title;
+    document.getElementById('cp-picker-grid').innerHTML = '<div class="cp-picker-empty">Cargando…</div>';
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+
+    document.getElementById('cp-picker-close').focus();
+    cpLoadPicker(CP.picker.path);
+  }
+
+  function cpClosePicker() {
+    var modal = document.getElementById('cp-picker');
+    if (!modal || !modal.classList.contains('is-open')) return;
+    modal.classList.remove('is-open');
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
+  /**
+   * @param {string} path
+   */
+  function cpLoadPicker(path) {
+    cpRun('cpListImages', [path || ''], {
+      busy: false,
+      ok: function (data) {
+        // Si el usuario cerró el selector mientras cargaba, no pintamos nada.
+        var modal = document.getElementById('cp-picker');
+        if (!modal.classList.contains('is-open')) return;
+        cpRenderPicker(data);
+      },
+      fail: function (message) {
+        if (path) {
+          // La carpeta pudo borrarse: volvemos a la raíz.
+          cpLoadPicker('');
+          return;
+        }
+        document.getElementById('cp-picker-grid').innerHTML =
+          '<div class="cp-picker-empty">' + cpEsc(message) + '</div>';
+      }
+    });
+  }
+
+  function cpRenderPicker(data) {
+    CP_PICKER_DATA = data;
+
+    var grid = document.getElementById('cp-picker-grid');
+    var pathLabel = document.getElementById('cp-picker-path');
+    var count = document.getElementById('cp-picker-count');
+    var up = document.getElementById('cp-picker-up');
+
+    pathLabel.textContent = data.path
+      ? 'Imágenes / ' + data.path.split('/').join(' / ')
+      : 'Imágenes';
+
+    if (count) {
+      count.textContent = data.files.length +
+        (data.files.length === 1 ? ' archivo' : ' archivos');
+    }
+
+    if (up) {
+      up.hidden = !data.path;
+      up.onclick = function () { cpLoadPicker(data.parent || ''); };
+    }
+
+    var html = '';
+
+    if (data.path) {
+      html += '<button type="button" class="cp-picker-folder" data-up="1">' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><polyline points="12 19 5 12 12 5"/><line x1="19" y1="12" x2="5" y2="12"/></svg>' +
+        '<span>Carpeta anterior</span>' +
+      '</button>';
+    }
+
+    html += data.folders.map(function (folder) {
+      return '<button type="button" class="cp-picker-folder" data-folder="' + cpEsc(folder.path) + '">' +
+        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>' +
+        '<span>' + cpEsc(folder.name) + '</span>' +
+      '</button>';
+    }).join('');
+
+    html += data.files.map(function (file, index) {
+      return '<button type="button" class="cp-picker-item" data-file="' + index + '" title="' + cpEsc(file.name) + '">' +
+        '<img src="' + cpEsc(file.thumb) + '" alt="" loading="lazy" ' +
+          'onerror="this.style.visibility=\'hidden\'">' +
+        '<span>' + cpEsc(file.name) + '</span>' +
+      '</button>';
+    }).join('');
+
+    if (!data.folders.length && !data.files.length) {
+      html += '<div class="cp-picker-empty">' +
+        'Esta carpeta está vacía. Sube imágenes desde la pestaña <b>Imágenes</b>.' +
+      '</div>';
+    }
+
+    grid.innerHTML = html;
+  }
+
+  // ==================== Eventos ====================
+
+  document.getElementById('cp-picker-close').addEventListener('click', cpClosePicker);
+
+  document.getElementById('cp-picker').addEventListener('click', function (event) {
+    if (event.target === this) cpClosePicker();
+  });
+
+  document.getElementById('cp-picker-grid').addEventListener('click', function (event) {
+    var folder = event.target.closest('[data-folder]');
+    if (folder) {
+      cpLoadPicker(folder.getAttribute('data-folder'));
+      return;
+    }
+
+    if (event.target.closest('[data-up]')) {
+      cpLoadPicker((CP_PICKER_DATA && CP_PICKER_DATA.parent) || '');
+      return;
+    }
+
+    var item = event.target.closest('[data-file]');
+    if (item && CP_PICKER_DATA) {
+      var file = CP_PICKER_DATA.files[Number(item.getAttribute('data-file'))];
+      if (!file) return;
+      if (CP.picker && typeof CP.picker.onPick === 'function') CP.picker.onPick(file);
+      cpClosePicker();
+    }
+  });
+</script>

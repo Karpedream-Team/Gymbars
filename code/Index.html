@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+
+  <?!= include('Styles') ?>
+  <?!= include('Navbar/NavbarStyles') ?>
+  <?!= include('HomePage/HomePageStyles') ?>
+  <?!= include('ProgramModal/ProgramModalStyles') ?>
+  <?!= include('Footer/FooterStyles') ?>
+</head>
+
+<body>
+  <script>
+    // ============================================================
+    // ===  DATOS DEL SITIO (inyectados por Code.gs)  =============
+    // ============================================================
+    const siteData = <?!= siteDataJson ?>;
+
+    const site = siteData.site || {};
+    const images = siteData.images || {};
+    const carouselItems = siteData.carousel || [];
+    const features = siteData.features || [];
+    const programs = siteData.programs || [];
+    const schedule = siteData.schedule || [];
+    const social = siteData.social || [];
+    const webAppUrl = <?!= JSON.stringify(webAppUrl || '') ?>;
+
+    // ============================================================
+    // ===  TEMA (colores definidos en la pestaña "Sitio")  =======
+    // ============================================================
+    (function applyTheme() {
+      const root = document.documentElement.style;
+      const map = {
+        colorNavbar: '--color-navbar',
+        colorFondo: '--color-bg',
+        colorSeccion: '--color-section',
+        colorTexto: '--color-text',
+        colorTextoClaro: '--color-text-light',
+        colorAcento: '--color-accent',
+        colorSabado: '--color-saturday',
+        colorDomingo: '--color-sunday',
+        colorContacto: '--color-contact'
+      };
+      Object.keys(map).forEach(key => {
+        if (site[key]) root.setProperty(map[key], site[key]);
+      });
+
+      if (site.tipografia) {
+        const family = String(site.tipografia).replace(/[^A-Za-z0-9 ]/g, '').trim();
+
+        if (family) {
+          root.setProperty('--font-base', "'" + family + "', Roboto, 'Helvetica Neue', sans-serif");
+        }
+
+        // La hoja puede pedir otra tipografía; se carga desde Google Fonts.
+        if (family && family !== 'Roboto') {
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = 'https://fonts.googleapis.com/css2?family=' +
+            encodeURIComponent(family).replace(/%20/g, '+') + ':wght@400;500;700&display=swap';
+          document.head.appendChild(link);
+        }
+      }
+
+      document.title = site.tituloSEO || site.nombre || 'Gymbars';
+      const meta = document.querySelector('meta[name="description"]');
+      if (meta && site.descripcionSEO) meta.setAttribute('content', site.descripcionSEO);
+    })();
+
+    // ============================================================
+    // ===  Utilidades compartidas  ===============================
+    // ============================================================
+    function escapeHtml_(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    /**
+     * Devuelve las clases de Font Awesome para un icono de la pestaña Redes.
+     * Los iconos de marca necesitan "fa-brands"; el resto usa "fa-solid".
+     * Se mantiene una lista corta porque no todas las marcas existen en el set.
+     */
+    const BRAND_ICONS_ = {
+      'fa-facebook': 1, 'fa-facebook-f': 1, 'fa-facebook-messenger': 1,
+      'fa-instagram': 1, 'fa-whatsapp': 1, 'fa-tiktok': 1, 'fa-youtube': 1,
+      'fa-x-twitter': 1, 'fa-twitter': 1, 'fa-linkedin': 1, 'fa-linkedin-in': 1,
+      'fa-telegram': 1, 'fa-threads': 1, 'fa-snapchat': 1, 'fa-pinterest': 1,
+      'fa-spotify': 1, 'fa-discord': 1, 'fa-github': 1, 'fa-behance': 1,
+      'fa-dribbble': 1
+    };
+
+    function iconClass_(icon) {
+      let value = String(icon || '').trim().toLowerCase() || 'fa-link';
+      if (value.indexOf('fa-') !== 0) value = 'fa-' + value;
+      value = value.replace(/[^a-z0-9-]/g, '');
+      return (BRAND_ICONS_[value] ? 'fa-brands ' : 'fa-solid ') + value;
+    }
+
+    /**
+     * Devuelve el HTML de una imagen (o cadena vacía si no hay URL).
+     * Usa <img loading="lazy"> en lugar de background-image: las imágenes de
+     * Drive (lh3.googleusercontent.com) fallan de forma intermitente cuando el
+     * navegador pide muchas a la vez, y así además hay alt, object-fit y reintento.
+     */
+    function imageMarkup_(url, alt, opts) {
+      if (!url) return '';
+      opts = opts || {};
+      var pos = opts.pos || 'center';
+      var contain = opts.fit === 'contain';
+
+      return '<img class="media-img' + (contain ? ' media-img--contain' : '') + '"' +
+        ' src="' + escapeHtml_(url) + '"' +
+        ' alt="' + escapeHtml_(alt || '') + '"' +
+        ' loading="' + (opts.eager ? 'eager' : 'lazy') + '"' +
+        (opts.eager ? ' fetchpriority="high"' : '') +
+        ' style="object-position:center ' + pos + ';"' +
+        ' onerror="retryImage_(this)">';
+    }
+
+    /**
+     * Reintenta cargar una imagen hasta 2 veces y, si no hay forma,
+     * la oculta dejando el placeholder de la marca.
+     */
+    function retryImage_(img) {
+      var attempt = parseInt(img.getAttribute('data-retry') || '0', 10);
+      var parent = img.parentElement;
+
+      if (attempt >= 2) {
+        if (parent) parent.classList.add('media--empty');
+        img.remove();
+        return;
+      }
+
+      img.setAttribute('data-retry', String(attempt + 1));
+      var base = img.src.split('?')[0].split('#')[0];
+      window.setTimeout(function () {
+        img.src = base + '?retry=' + (attempt + 1);
+      }, 400 * (attempt + 1));
+    }
+
+    /**
+     * Vigila las imágenes visibles: si una quedó bloqueada sin disparar
+     * `error` (CORB/ORB o límite temporal de lh3), la reintenta y, si no
+     * carga, deja el placeholder de la marca en su lugar.
+     */
+    function watchImages_() {
+      var images = document.querySelectorAll('img.media-img:not([data-watch])');
+      if (!images.length) return;
+
+      Array.prototype.forEach.call(images, function (img) {
+        img.setAttribute('data-watch', '1');
+
+        if (!('IntersectionObserver' in window)) return;
+
+        var observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (!entry.isIntersecting) return;
+            observer.disconnect();
+            verifyImage_(img, 0);
+          });
+        }, { rootMargin: '250px' });
+
+        observer.observe(img);
+      });
+    }
+
+    function verifyImage_(img, tries) {
+      if (!img.isConnected || img.naturalWidth > 0) return;
+
+      if (tries >= 3) {
+        if (img.parentElement) img.parentElement.classList.add('media--empty');
+        img.remove();
+        return;
+      }
+
+      window.setTimeout(function () {
+        if (!img.isConnected || img.naturalWidth > 0) return;
+        img.src = img.src.split('?')[0] + '?retry=' + (tries + 1);
+        window.setTimeout(function () { verifyImage_(img, tries + 1); }, 1500);
+      }, 700 * (tries + 1));
+    }
+  </script>
+
+  <?!= include('Navbar/Navbar') ?>
+
+  <main id="app-viewport">
+    <?!= include('HomePage/HomePage') ?>
+  </main>
+
+  <?!= include('Footer/Footer') ?>
+  <?!= include('ProgramModal/ProgramModal') ?>
+  <?!= include('Router/Router') ?>
+
+</body>
+
+</html>

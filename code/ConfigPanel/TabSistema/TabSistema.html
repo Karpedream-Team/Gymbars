@@ -1,0 +1,214 @@
+<div class="cp-sys-grid">
+  <section class="cp-panel">
+    <div class="cp-panel-head">
+      <div>
+        <h2>Sitio publicado</h2>
+        <p>Enlaces de la implementación y de la hoja que alimenta el sitio.</p>
+      </div>
+    </div>
+    <dl class="cp-kv" id="cp-sys-site"></dl>
+    <p style="margin-top:12px">
+      <a class="cp-link" id="cp-sys-open" href="#" target="_blank" rel="noopener">Abrir sitio en una pestaña nueva</a>
+    </p>
+  </section>
+
+  <section class="cp-panel">
+    <div class="cp-panel-head">
+      <div>
+        <h2>Respaldo</h2>
+        <p>Copia la hoja de cálculo junto al archivo original en Drive.</p>
+      </div>
+    </div>
+    <button type="button" class="cp-btn" id="cp-sys-backup">Crear copia de seguridad</button>
+    <div class="cp-hint" id="cp-sys-backup-result" style="margin-top:10px"></div>
+  </section>
+
+  <section class="cp-panel">
+    <div class="cp-panel-head">
+      <div>
+        <h2>Caché del sitio</h2>
+        <p>El sitio guarda los datos unos minutos para cargar rápido. Limpia la caché después de cambios importantes.</p>
+      </div>
+    </div>
+    <button type="button" class="cp-btn" id="cp-sys-cache">Limpiar caché</button>
+  </section>
+</div>
+
+<section class="cp-panel">
+  <div class="cp-panel-head">
+    <div>
+      <h2>Diagnóstico de imágenes</h2>
+      <p>Comprueba que cada enlace de la pestaña Imágenes responda y sea una imagen pública.</p>
+    </div>
+    <button type="button" class="cp-btn" id="cp-sys-check">Revisar imágenes</button>
+  </div>
+  <div id="cp-sys-checks" class="cp-hint">Aún no has hecho la revisión.</div>
+</section>
+
+<section class="cp-panel">
+  <div class="cp-panel-head">
+    <div>
+      <h2>Pestañas de la hoja</h2>
+      <p>Si borraste una pestaña por accidente, puedes crearla vacía otra vez.</p>
+    </div>
+    <button type="button" class="cp-btn" id="cp-sys-tabs-fix">Crear pestañas faltantes</button>
+  </div>
+  <div id="cp-sys-tabs"></div>
+</section>
+
+<section class="cp-panel">
+  <div class="cp-panel-head">
+    <div>
+      <h2>Actividad reciente</h2>
+      <p>Últimos eventos registrados por el sitio (lecturas, guardados y respaldos).</p>
+    </div>
+  </div>
+  <div id="cp-sys-log"></div>
+</section>
+
+<script>
+  function cpRenderSystem() {
+    if (!CP.data || !CP.data.system) return;
+
+    var system = CP.data.system;
+
+    var siteInfo = document.getElementById('cp-sys-site');
+    if (siteInfo) {
+      siteInfo.innerHTML =
+        cpSysKv_('Sitio', system.webUrl
+          ? '<a href="' + cpEsc(system.webUrl) + '" target="_blank" rel="noopener">' + cpEsc(system.webUrl) + '</a>'
+          : '<span class="cp-badge">Sin publicar</span>') +
+        cpSysKv_('Hoja', system.sheetUrl
+          ? '<a href="' + cpEsc(system.sheetUrl) + '" target="_blank" rel="noopener">' + cpEsc(system.sheetName) + '</a>'
+          : cpEsc(system.sheetName || '—')) +
+        cpSysKv_('Imágenes', system.folder && system.folder.url
+          ? '<a href="' + cpEsc(system.folder.url) + '" target="_blank" rel="noopener">' + cpEsc(system.folder.name) + '</a>'
+          : cpEsc((system.folder && system.folder.name) || '—')) +
+        cpSysKv_('Zona horaria', cpEsc(system.timeZone || '—'));
+    }
+
+    var open = document.getElementById('cp-sys-open');
+    if (open) {
+      if (system.webUrl) {
+        open.href = system.webUrl;
+        open.hidden = false;
+      } else {
+        open.hidden = true;
+      }
+    }
+
+    cpRenderSystemTabs(system.tabs || []);
+    cpRenderSystemLog(CP.data.log || []);
+  }
+
+  function cpSysKv_(label, valueHtml) {
+    return '<dt>' + cpEsc(label) + '</dt><dd>' + valueHtml + '</dd>';
+  }
+
+  function cpRenderSystemTabs(tabs) {
+    var container = document.getElementById('cp-sys-tabs');
+    if (!container) return;
+
+    container.innerHTML = tabs.map(function (tab) {
+      return '<div class="cp-check-row">' +
+        '<span>' + cpEsc(tab.name) + '</span>' +
+        (tab.exists
+          ? '<span class="cp-badge is-ok">' + tab.rows + (tab.rows === 1 ? ' fila' : ' filas') + '</span>'
+          : '<span class="cp-badge is-error">Falta</span>') +
+      '</div>';
+    }).join('');
+  }
+
+  function cpRenderSystemLog(rows) {
+    var container = document.getElementById('cp-sys-log');
+    if (!container) return;
+
+    if (!rows.length) {
+      container.innerHTML = '<p class="cp-hint">Todavía no hay actividad registrada.</p>';
+      return;
+    }
+
+    container.innerHTML = '<table class="cp-log">' +
+      '<thead><tr><th>Fecha</th><th>Evento</th><th>Estado</th><th>Detalle</th></tr></thead>' +
+      '<tbody>' +
+        rows.map(function (row) {
+          return '<tr>' +
+            '<td>' + cpEsc(row.date) + '</td>' +
+            '<td>' + cpEsc(row.type) + '</td>' +
+            '<td>' + cpEsc(row.state) + '</td>' +
+            '<td class="cp-log-json" title="' + cpEsc(row.json) + '">' + cpEsc(row.json) + '</td>' +
+          '</tr>';
+        }).join('') +
+      '</tbody>' +
+    '</table>';
+  }
+
+  // ==================== Acciones ====================
+
+  document.getElementById('cp-sys-cache').addEventListener('click', function () {
+    cpRun('cpRefreshCache', [], { busy: 'Limpiando caché…' });
+  });
+
+  document.getElementById('cp-sys-backup').addEventListener('click', function () {
+    var result = document.getElementById('cp-sys-backup-result');
+    if (result) result.textContent = 'Creando respaldo…';
+
+    cpRun('cpBackup', [], {
+      busy: 'Creando respaldo…',
+      ok: function (response) {
+        if (result) {
+          result.innerHTML = 'Listo: <a href="' + cpEsc(response.url) + '" target="_blank" rel="noopener">' +
+            cpEsc(response.name) + '</a>';
+        }
+        cpToast(response.message || 'Respaldo creado.', 'ok');
+      },
+      fail: function (message) {
+        if (result) result.textContent = message;
+        cpToast(message, 'error');
+      }
+    });
+  });
+
+  document.getElementById('cp-sys-check').addEventListener('click', function () {
+    var container = document.getElementById('cp-sys-checks');
+    if (container) container.innerHTML = '<p class="cp-hint">Revisando…</p>';
+
+    cpRun('cpCheckImages', [], {
+      busy: 'Revisando imágenes…',
+      ok: function (results) {
+        var ok = results.filter(function (row) { return row.ok; }).length;
+        var failed = results.length - ok;
+
+        if (container) {
+          container.innerHTML = results.map(function (row) {
+            return '<div class="cp-check-row">' +
+              '<span>' + cpEsc(row.ref) + '</span>' +
+              '<span class="cp-badge ' + (row.ok ? 'is-ok' : 'is-error') + '">' + cpEsc(row.status) + '</span>' +
+            '</div>';
+          }).join('') || '<p class="cp-hint">No hay imágenes registradas.</p>';
+        }
+
+        cpToast(
+          failed
+            ? 'Revisión terminada: ' + ok + ' correctas y ' + failed + ' con problemas.'
+            : 'Todas las imágenes responden correctamente (' + ok + ').',
+          failed ? 'warn' : 'ok'
+        );
+      },
+      fail: function (message) {
+        if (container) container.innerHTML = '<p class="cp-hint">' + cpEsc(message) + '</p>';
+        cpToast(message, 'error');
+      }
+    });
+  });
+
+  document.getElementById('cp-sys-tabs-fix').addEventListener('click', function () {
+    cpRun('cpSetupSheets', [], {
+      busy: 'Creando pestañas…',
+      ok: function (response) {
+        cpToast(response.message || 'Pestañas listas.', 'ok');
+        cpReloadData();
+      }
+    });
+  });
+</script>

@@ -1,0 +1,294 @@
+<div class="cp-toolbar">
+  <button type="button" class="cp-btn cp-btn--primary" id="cp-prog-add">Agregar programa</button>
+  <span class="cp-hint">Cada programa tiene una lista de instrucciones y otra de ejercicios.</span>
+  <span class="cp-spacer"></span>
+  <span class="cp-hint" id="cp-prog-count"></span>
+</div>
+
+<div id="cp-prog-list"></div>
+
+<script>
+  function cpRenderPrograms() {
+    var container = document.getElementById('cp-prog-list');
+    var count = document.getElementById('cp-prog-count');
+    if (!container) return;
+
+    if (!CP.model.programs.length) {
+      container.innerHTML = '<div class="cp-empty">' +
+        '<strong>No hay programas</strong>' +
+        '<p>Agrega una rutina con su imagen, instrucciones y ejercicios.</p>' +
+      '</div>';
+      if (count) count.textContent = '';
+      return;
+    }
+
+    container.innerHTML = CP.model.programs.map(function (program, index) {
+      var thumb = cpImageThumb(program.image);
+      var slug = cpSlug(program.title) || 'sin-titulo';
+
+      return '<article class="cp-program" data-index="' + index + '">' +
+        '<div class="cp-program-head">' +
+          '<div class="cp-row-thumb ' + (thumb ? '' : 'is-empty') + '">' +
+            (thumb
+              ? '<img src="' + cpEsc(thumb) + '" alt="" loading="lazy" onerror="cpImgFallback_(this)">'
+              : '') +
+          '</div>' +
+
+          '<div class="cp-fields">' +
+            '<label class="cp-field">' +
+              '<span>Título</span>' +
+              '<input type="text" data-prog="title" value="' + cpEsc(program.title) + '" placeholder="Nivel 0 · Rutina 4">' +
+            '</label>' +
+
+            '<label class="cp-field">' +
+              '<span>Imagen</span>' +
+              '<div class="cp-input-row">' +
+                '<select data-prog="image">' + cpImageOptions(program.image) + '</select>' +
+                '<label class="cp-btn cp-btn--small cp-file">Subir' +
+                  '<input type="file" accept="image/*" data-upload="program">' +
+                '</label>' +
+              '</div>' +
+            '</label>' +
+
+            '<div class="cp-field is-wide">' +
+              '<span class="cp-slug">Enlace del programa: <code>' + cpEsc(slug) + '</code></span>' +
+            '</div>' +
+          '</div>' +
+
+          '<div class="cp-order">' +
+            '<span class="cp-order-num">' + (index + 1) + '</span>' +
+            '<button type="button" class="cp-icon-btn" data-act="up" title="Subir" aria-label="Subir programa">&#8593;</button>' +
+            '<button type="button" class="cp-icon-btn" data-act="down" title="Bajar" aria-label="Bajar programa">&#8595;</button>' +
+            '<button type="button" class="cp-icon-btn is-danger" data-act="delete" title="Quitar" aria-label="Quitar programa">&#10005;</button>' +
+          '</div>' +
+        '</div>' +
+
+        '<div class="cp-program-lists">' +
+          cpProgramListHtml_(program, 'instructions', 'Instrucciones', 'Cómo se realiza la rutina') +
+          cpProgramListHtml_(program, 'exercises', 'Ejercicios', 'Los movimientos de la rutina') +
+        '</div>' +
+      '</article>';
+    }).join('');
+
+    if (count) {
+      count.textContent = CP.model.programs.length +
+        (CP.model.programs.length === 1 ? ' programa' : ' programas');
+    }
+  }
+
+  /**
+   * @param {Object} program
+   * @param {'instructions'|'exercises'} type
+   * @param {string} title
+   * @param {string} hint
+   * @return {string}
+   */
+  function cpProgramListHtml_(program, type, title, hint) {
+    var items = program[type] || [];
+
+    var rows = items.map(function (text, index) {
+      return '<div class="cp-list-row" data-list-type="' + type + '" data-list-index="' + index + '">' +
+        '<span class="cp-list-index">' + (index + 1) + '</span>' +
+        '<input type="text" data-list="' + type + '" value="' + cpEsc(text) + '" ' +
+          'placeholder="' + cpEsc(type === 'instructions' ? 'Instrucción' : 'Ejercicio') + '">' +
+        '<div class="cp-list-actions">' +
+          '<button type="button" class="cp-icon-btn" data-act="list-up" title="Subir" aria-label="Subir">&#8593;</button>' +
+          '<button type="button" class="cp-icon-btn" data-act="list-down" title="Bajar" aria-label="Bajar">&#8595;</button>' +
+          '<button type="button" class="cp-icon-btn is-danger" data-act="list-delete" title="Quitar" aria-label="Quitar">&#10005;</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    return '<section class="cp-list-block">' +
+      '<h4>' +
+        '<span>' + cpEsc(title) + ' <span class="cp-count">' + items.length + '</span></span>' +
+        '<button type="button" class="cp-btn cp-btn--small" data-act="add-' + type + '">+ Añadir</button>' +
+      '</h4>' +
+      '<p class="cp-hint" style="margin:-2px 0 8px">' + cpEsc(hint) + '</p>' +
+      '<div class="cp-list-rows">' +
+        (rows || '<div class="cp-hint">Sin elementos todavía.</div>') +
+      '</div>' +
+    '</section>';
+  }
+
+  function cpCollectPrograms() {
+    var rows = [];
+
+    Array.prototype.forEach.call(document.querySelectorAll('#cp-prog-list .cp-program'), function (card) {
+      function value(name) {
+        var input = card.querySelector('[data-prog="' + name + '"]');
+        return input ? input.value.trim() : '';
+      }
+
+      function list(type) {
+        var values = [];
+        Array.prototype.forEach.call(card.querySelectorAll('[data-list="' + type + '"]'), function (input) {
+          values.push(input.value.trim());
+        });
+        return values;
+      }
+
+      rows.push({
+        title: value('title'),
+        image: value('image'),
+        instructions: list('instructions'),
+        exercises: list('exercises')
+      });
+    });
+
+    return rows;
+  }
+
+  function cpSyncProgramsModel() {
+    var rows = cpCollectPrograms();
+    if (rows.length === CP.model.programs.length) CP.model.programs = rows;
+  }
+
+  function cpSaveProgramsTab() {
+    cpSaveAndReload('cpSavePrograms', [cpCollectPrograms()]);
+  }
+
+  function cpUpdateProgramThumb(card) {
+    var select = card.querySelector('[data-prog="image"]');
+    var thumb = cpImageThumb(select ? select.value : '');
+    var box = card.querySelector('.cp-row-thumb');
+    if (!box) return;
+
+    box.classList.toggle('is-empty', !thumb);
+    var img = box.querySelector('img');
+
+    if (!thumb) {
+      if (img) img.remove();
+      return;
+    }
+    if (!img) {
+      img = document.createElement('img');
+      img.alt = '';
+      img.loading = 'lazy';
+      img.onerror = function () { cpImgFallback_(img); };
+      box.appendChild(img);
+    }
+    img.src = thumb;
+  }
+
+  function cpFocusProgramListInput(index, type, last) {
+    var card = document.querySelector('#cp-prog-list .cp-program[data-index="' + index + '"]');
+    if (!card) return;
+    var inputs = card.querySelectorAll('[data-list="' + type + '"]');
+    var input = last ? inputs[inputs.length - 1] : inputs[0];
+    if (input) input.focus();
+  }
+
+  // ==================== Eventos ====================
+
+  document.getElementById('cp-prog-list').addEventListener('input', function (event) {
+    var title = event.target.closest('[data-prog="title"]');
+    if (!title) return;
+
+    var card = title.closest('.cp-program');
+    var slug = card.querySelector('.cp-slug code');
+    if (slug) slug.textContent = cpSlug(title.value) || 'sin-titulo';
+  });
+
+  document.getElementById('cp-prog-list').addEventListener('click', function (event) {
+    var button = event.target.closest('[data-act]');
+    if (!button) return;
+
+    var card = button.closest('.cp-program');
+    if (!card) return;
+
+    var index = Number(card.getAttribute('data-index'));
+    var action = button.getAttribute('data-act');
+
+    cpSyncProgramsModel();
+    var program = CP.model.programs[index];
+    if (!program) return;
+
+    if (action === 'up' || action === 'down') {
+      cpMove(CP.model.programs, index, action === 'up' ? index - 1 : index + 1);
+      cpRenderPrograms();
+      cpMarkDirty();
+      return;
+    }
+
+    if (action === 'delete') {
+      if (!window.confirm('¿Quitar el programa «' + (program.title || 'sin título') + '» y todas sus instrucciones?')) return;
+      CP.model.programs.splice(index, 1);
+      cpRenderPrograms();
+      cpMarkDirty();
+      return;
+    }
+
+    if (action === 'add-instructions' || action === 'add-exercises') {
+      var type = action === 'add-instructions' ? 'instructions' : 'exercises';
+      program[type] = program[type] || [];
+      program[type].push('');
+      cpRenderPrograms();
+      cpMarkDirty();
+      cpFocusProgramListInput(index, type, true);
+      return;
+    }
+
+    if (action.indexOf('list-') === 0) {
+      var row = button.closest('.cp-list-row');
+      if (!row) return;
+
+      var listType = row.getAttribute('data-list-type');
+      var listIndex = Number(row.getAttribute('data-list-index'));
+      var list = program[listType] || [];
+
+      if (action === 'list-up' || action === 'list-down') {
+        cpMove(list, listIndex, action === 'list-up' ? listIndex - 1 : listIndex + 1);
+      } else if (action === 'list-delete') {
+        list.splice(listIndex, 1);
+      }
+
+      cpRenderPrograms();
+      cpMarkDirty();
+    }
+  });
+
+  document.getElementById('cp-prog-list').addEventListener('change', function (event) {
+    var target = event.target;
+
+    if (target.getAttribute('data-prog') === 'image') {
+      cpUpdateProgramThumb(target.closest('.cp-program'));
+    }
+
+    if (target.getAttribute('data-upload') === 'program') {
+      var files = target.files;
+      var card = target.closest('.cp-program');
+      if (!files || !files.length) return;
+      target.value = '';
+
+      cpSyncProgramsModel();
+      cpUploadFiles(files, 'workout', true, function (result) {
+        var image = result.image;
+        if (!image) return;
+
+        cpAppendImageToModel(image);
+
+        var select = card.querySelector('[data-prog="image"]');
+        var option = document.createElement('option');
+        option.value = image.ref;
+        option.textContent = image.ref;
+        select.appendChild(option);
+        select.value = image.ref;
+
+        cpUpdateProgramThumb(card);
+        cpMarkDirty();
+      });
+    }
+  });
+
+  document.getElementById('cp-prog-add').addEventListener('click', function () {
+    cpSyncProgramsModel();
+    CP.model.programs.push({ title: '', image: '', instructions: [], exercises: [] });
+    cpRenderPrograms();
+    cpMarkDirty();
+
+    var cards = document.querySelectorAll('#cp-prog-list .cp-program');
+    var last = cards[cards.length - 1];
+    if (last) last.querySelector('[data-prog="title"]').focus();
+  });
+</script>

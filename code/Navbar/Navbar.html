@@ -1,0 +1,173 @@
+<nav class="navbar" id="navbar" aria-label="Navegación principal">
+  <div class="navbar-inner">
+    <a class="navbar-brand" href="#home" data-scroll="top" id="navbarBrand">Gymbars</a>
+
+    <button class="navbar-toggle" id="navbarToggle" type="button"
+            aria-label="Abrir menú" aria-controls="navbarMenu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+
+    <div class="navbar-menu" id="navbarMenu">
+      <ul class="navbar-links" id="navbarLinks"></ul>
+      <ul class="navbar-social" id="navbarSocial"></ul>
+    </div>
+  </div>
+</nav>
+
+<script>
+  // ==================== NAVBAR ====================
+  function renderNavbar() {
+    const brand = document.getElementById('navbarBrand');
+    if (brand) brand.textContent = site.nombre || 'Gymbars';
+
+    const links = [
+      { label: 'Inicio', target: 'top' },
+      { label: 'Información', target: 'info' },
+      { label: 'Programas', target: 'programas' },
+      { label: 'Ubicación', target: 'ubicacion' }
+    ];
+
+    const linksEl = document.getElementById('navbarLinks');
+    linksEl.innerHTML = links.map(link =>
+      '<li class="navbar-item">' +
+        '<a class="navbar-link" href="#' + link.target + '" data-scroll="' + link.target + '">' +
+          escapeHtml_(link.label) +
+        '</a>' +
+      '</li>'
+    ).join('') +
+    '<li class="navbar-item" id="navAdminItem" style="display:none;">' +
+      '<a class="navbar-link navbar-link--admin" id="navAdminLink" href="/admin" target="_blank" rel="noopener" onclick="closeMobileMenu()" title="Panel de administración">' +
+        '<i class="fa-solid fa-gear"></i> Admin' +
+      '</a>' +
+    '</li>';
+
+    const adminLink = document.getElementById('navAdminLink');
+    if (adminLink) {
+      adminLink.href = getAdminNavUrl();
+    }
+
+    const iconFor = name => {
+      const found = social.find(item => String(item.name).toLowerCase() === name);
+      return found ? found : null;
+    };
+
+    // Redes en el navbar: Facebook e Instagram (las mismas del diseño original).
+    const navbarSocial = ['facebook', 'instagram']
+      .map(iconFor)
+      .filter(Boolean);
+
+    document.getElementById('navbarSocial').innerHTML = navbarSocial.map(item =>
+      '<li>' +
+        '<a class="navbar-social-link" href="' + escapeHtml_(item.url) + '" target="_blank" rel="noopener" ' +
+           'title="' + escapeHtml_(item.name) + '" aria-label="' + escapeHtml_(item.name) + '">' +
+          '<i class="' + iconClass_(item.icon) + '"></i>' +
+        '</a>' +
+      '</li>'
+    ).join('');
+
+    // Smooth scroll sin tocar el hash (el hash lo usa el router).
+    document.querySelectorAll('[data-scroll]').forEach(el => {
+      el.addEventListener('click', event => {
+        event.preventDefault();
+        const target = el.getAttribute('data-scroll');
+        closeMobileMenu();
+        if (target === 'top') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          const section = document.getElementById(target);
+          if (section) {
+            const navEl = document.getElementById('navbar');
+            const navHeight = navEl ? navEl.offsetHeight : 58;
+            const targetY = section.getBoundingClientRect().top + window.pageYOffset - navHeight;
+            window.scrollTo({ top: Math.max(0, targetY), behavior: 'smooth' });
+          }
+        }
+        setActiveLink(target);
+      });
+    });
+
+    // Menú móvil
+    const toggle = document.getElementById('navbarToggle');
+    toggle.addEventListener('click', () => {
+      const open = document.getElementById('navbarMenu').classList.toggle('is-open');
+      toggle.setAttribute('aria-expanded', String(open));
+      document.body.classList.toggle('menu-open', open);
+    });
+
+    // Sombra al hacer scroll
+    window.addEventListener('scroll', () => {
+      document.getElementById('navbar').classList.toggle('is-scrolled', window.scrollY > 10);
+    }, { passive: true });
+
+    setActiveLink('top');
+    checkAdminNavbarAccess();
+  }
+
+  function getAdminNavUrl() {
+    // 1. Dominio configurado en la hoja de cálculo
+    if (typeof site !== 'undefined' && site && site.dominio) {
+      var dom = String(site.dominio).trim().replace(/\/+$/, '');
+      if (dom) {
+        if (!/^https?:\/\//i.test(dom)) dom = 'https://' + dom;
+        return dom + '/admin';
+      }
+    }
+    // 2. Si document.referrer viene del dominio propio (no de subdominios internos de Google)
+    try {
+      if (document.referrer) {
+        var ref = new URL(document.referrer);
+        if (ref.origin && ref.origin !== 'null' &&
+            !ref.hostname.includes('googleusercontent.com') &&
+            !ref.hostname.includes('script.google.com') &&
+            !ref.hostname.includes('sites.google.com')) {
+          return ref.origin + '/admin';
+        }
+      }
+    } catch (_) {}
+    // 3. Dominio oficial por defecto
+    return 'https://gymbarsgt.com/admin';
+  }
+
+  function checkAdminNavbarAccess() {
+    var token = '';
+    try {
+      token = localStorage.getItem('gymbarsAdminToken') || '';
+    } catch (_) {
+      token = '';
+    }
+
+    if (typeof google !== 'undefined' && google.script && google.script.run && google.script.run.cpVerifyAdminAccess) {
+      google.script.run
+        .withSuccessHandler(function (res) {
+          var adminEl = document.getElementById('navAdminItem');
+          if (adminEl) {
+            if (res && res.authorized) {
+              adminEl.style.display = 'block';
+            } else {
+              adminEl.style.display = 'none';
+            }
+          }
+        })
+        .withFailureHandler(function () {
+          var adminEl = document.getElementById('navAdminItem');
+          if (adminEl) adminEl.style.display = 'none';
+        })
+        .cpVerifyAdminAccess(token);
+    }
+  }
+
+  function closeMobileMenu() {
+    const menu = document.getElementById('navbarMenu');
+    const toggle = document.getElementById('navbarToggle');
+    if (!menu) return;
+    menu.classList.remove('is-open');
+    toggle.setAttribute('aria-expanded', 'false');
+    document.body.classList.remove('menu-open');
+  }
+
+  function setActiveLink(target) {
+    document.querySelectorAll('.navbar-link').forEach(link => {
+      link.classList.toggle('is-active', link.getAttribute('data-scroll') === target);
+    });
+  }
+</script>

@@ -1,0 +1,27 @@
+<footer class="footer" id="footer">
+  <div class="footer-inner">
+    <ul class="footer-social" id="footerSocial"></ul>
+    <p class="footer-legal" id="footerLegal"></p>
+  </div>
+</footer>
+
+<script>
+  // ==================== FOOTER ====================
+  function renderFooter() {
+    const list = document.getElementById('footerSocial');
+
+    list.innerHTML = social.map(item =>
+      '<li>' +
+        '<a href="' + escapeHtml_(item.url) + '" target="_blank" rel="noopener" ' +
+           'title="' + escapeHtml_(item.name) + '" aria-label="' + escapeHtml_(item.name) + '">' +
+          '<i class="' + iconClass_(item.icon) + '"></i>' +
+        '</a>' +
+      '</li>'
+    ).join('');
+
+    const parts = [];
+    if (site.licencia) parts.push(site.licencia);
+    if (site.copyright) parts.push(site.copyright);
+    document.getElementById('footerLegal').textContent = parts.join(': ');
+  }
+</script>

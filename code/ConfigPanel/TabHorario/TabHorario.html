@@ -1,0 +1,216 @@
+<div class="cp-toolbar">
+  <button type="button" class="cp-btn cp-btn--primary" id="cp-day-add">Agregar día</button>
+  <span class="cp-hint">Un día sin turnos se muestra como «Cerrado» en el sitio.</span>
+  <span class="cp-spacer"></span>
+  <span class="cp-hint" id="cp-day-count"></span>
+</div>
+
+<datalist id="cp-days">
+  <option value="Lunes a Viernes"></option>
+  <option value="Lunes a Jueves"></option>
+  <option value="Lunes"></option>
+  <option value="Martes"></option>
+  <option value="Miércoles"></option>
+  <option value="Jueves"></option>
+  <option value="Viernes"></option>
+  <option value="Sábado"></option>
+  <option value="Domingo"></option>
+  <option value="Fin de semana"></option>
+</datalist>
+
+<div class="cp-day-grid" id="cp-day-grid"></div>
+
+<script>
+  var CP_DAY_COLORS = ['#0E0E53', '#323232', '#960000', '#343A40', '#1B6E43', '#7A4B00'];
+
+  function cpRenderSchedule() {
+    var container = document.getElementById('cp-day-grid');
+    var count = document.getElementById('cp-day-count');
+    if (!container) return;
+
+    if (!CP.model.schedule.length) {
+      container.innerHTML = '<div class="cp-empty" style="grid-column:1/-1">' +
+        '<strong>No hay días configurados</strong>' +
+        '<p>Agrega un día y sus turnos. Si no agregas turnos, se mostrará como «Cerrado».</p>' +
+      '</div>';
+      if (count) count.textContent = '';
+      return;
+    }
+
+    container.innerHTML = CP.model.schedule.map(function (group, index) {
+      var shifts = (group.shifts || []).map(function (shift, shiftIndex) {
+        return '<div class="cp-shift" data-shift-index="' + shiftIndex + '">' +
+          '<input type="text" data-shift="label" value="' + cpEsc(shift.label) + '" placeholder="Turno ' + (shiftIndex + 1) + '">' +
+          '<input type="text" data-shift="time" value="' + cpEsc(shift.time) + '" placeholder="06:00 A.M. - 10:00 A.M.">' +
+          '<div class="cp-shift-actions">' +
+            '<button type="button" class="cp-icon-btn" data-act="shift-up" title="Subir turno" aria-label="Subir turno">&#8593;</button>' +
+            '<button type="button" class="cp-icon-btn" data-act="shift-down" title="Bajar turno" aria-label="Bajar turno">&#8595;</button>' +
+            '<button type="button" class="cp-icon-btn is-danger" data-act="shift-delete" title="Quitar turno" aria-label="Quitar turno">&#10005;</button>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+
+      return '<article class="cp-day" data-index="' + index + '">' +
+        '<div class="cp-day-head">' +
+          '<input type="text" list="cp-days" data-day="day" value="' + cpEsc(group.day) + '" ' +
+            'placeholder="Lunes a Viernes" aria-label="Nombre del día">' +
+          '<input type="color" data-day="color" value="' + cpEsc(cpDayColor_(group.color)) + '" ' +
+            'title="Color del día" aria-label="Color del día">' +
+          '<button type="button" class="cp-icon-btn" data-act="day-up" title="Subir día" aria-label="Subir día">&#8593;</button>' +
+          '<button type="button" class="cp-icon-btn" data-act="day-down" title="Bajar día" aria-label="Bajar día">&#8595;</button>' +
+          '<button type="button" class="cp-icon-btn is-danger" data-act="day-delete" title="Quitar día" aria-label="Quitar día">&#10005;</button>' +
+        '</div>' +
+
+        '<div class="cp-shifts">' +
+          (shifts || '<p class="cp-hint" style="margin:0 0 4px">Sin turnos: se mostrará como «Cerrado».</p>') +
+        '</div>' +
+
+        '<div class="cp-day-foot">' +
+          '<span class="cp-hint">' + (shifts ? 'Turnos de ' + group.day : 'Día cerrado') + '</span>' +
+          '<div style="display:flex;gap:6px">' +
+            '<button type="button" class="cp-btn cp-btn--small" data-act="day-close">Marcar cerrado</button>' +
+            '<button type="button" class="cp-btn cp-btn--small" data-act="shift-add">+ Turno</button>' +
+          '</div>' +
+        '</div>' +
+      '</article>';
+    }).join('');
+
+    if (count) {
+      count.textContent = CP.model.schedule.length +
+        (CP.model.schedule.length === 1 ? ' día' : ' días');
+    }
+  }
+
+  function cpDayColor_(color) {
+    var value = String(color || '').trim();
+    return /^#[0-9A-Fa-f]{6}$/.test(value) ? value : '#0E0E53';
+  }
+
+  function cpCollectSchedule() {
+    var rows = [];
+
+    Array.prototype.forEach.call(document.querySelectorAll('#cp-day-grid .cp-day'), function (card) {
+      var day = card.querySelector('[data-day="day"]');
+      var color = card.querySelector('[data-day="color"]');
+
+      var shifts = [];
+      Array.prototype.forEach.call(card.querySelectorAll('.cp-shift'), function (shift) {
+        var label = shift.querySelector('[data-shift="label"]');
+        var time = shift.querySelector('[data-shift="time"]');
+        shifts.push({
+          label: label ? label.value.trim() : '',
+          time: time ? time.value.trim() : ''
+        });
+      });
+
+      rows.push({
+        day: day ? day.value.trim() : '',
+        color: color ? color.value : '#0E0E53',
+        shifts: shifts
+      });
+    });
+
+    return rows;
+  }
+
+  function cpSyncScheduleModel() {
+    var rows = cpCollectSchedule();
+    if (rows.length === CP.model.schedule.length) CP.model.schedule = rows;
+  }
+
+  function cpSaveScheduleTab() {
+    cpSaveAndReload('cpSaveSchedule', [cpCollectSchedule()]);
+  }
+
+  function cpFocusDay(index) {
+    var card = document.querySelector('#cp-day-grid .cp-day[data-index="' + index + '"]');
+    if (card) card.querySelector('[data-day="day"]').focus();
+  }
+
+  // ==================== Eventos ====================
+
+  document.getElementById('cp-day-grid').addEventListener('click', function (event) {
+    var button = event.target.closest('[data-act]');
+    if (!button) return;
+
+    var card = button.closest('.cp-day');
+    if (!card) return;
+
+    var index = Number(card.getAttribute('data-index'));
+    var action = button.getAttribute('data-act');
+
+    cpSyncScheduleModel();
+    var group = CP.model.schedule[index];
+    if (!group) return;
+
+    group.shifts = group.shifts || [];
+
+    if (action === 'day-up' || action === 'day-down') {
+      cpMove(CP.model.schedule, index, action === 'day-up' ? index - 1 : index + 1);
+      cpRenderSchedule();
+      cpMarkDirty();
+      return;
+    }
+
+    if (action === 'day-delete') {
+      if (!window.confirm('¿Quitar el día «' + (group.day || 'sin nombre') + '» del horario?')) return;
+      CP.model.schedule.splice(index, 1);
+      cpRenderSchedule();
+      cpMarkDirty();
+      return;
+    }
+
+    if (action === 'day-close') {
+      if (group.shifts.length && !window.confirm('¿Quitar todos los turnos de «' + group.day + '»? Se mostrará como «Cerrado».')) return;
+      group.shifts = [];
+      cpRenderSchedule();
+      cpMarkDirty();
+      return;
+    }
+
+    if (action === 'shift-add') {
+      group.shifts.push({ label: '', time: '' });
+      cpRenderSchedule();
+      cpMarkDirty();
+
+      var newCard = document.querySelector('#cp-day-grid .cp-day[data-index="' + index + '"]');
+      if (newCard) {
+        var inputs = newCard.querySelectorAll('[data-shift="time"]');
+        var last = inputs[inputs.length - 1];
+        if (last) last.focus();
+      }
+      return;
+    }
+
+    if (action.indexOf('shift-') === 0) {
+      var row = button.closest('.cp-shift');
+      if (!row) return;
+
+      var shiftIndex = Number(row.getAttribute('data-shift-index'));
+
+      if (action === 'shift-up' || action === 'shift-down') {
+        cpMove(group.shifts, shiftIndex, action === 'shift-up' ? shiftIndex - 1 : shiftIndex + 1);
+      } else if (action === 'shift-delete') {
+        group.shifts.splice(shiftIndex, 1);
+      }
+
+      cpRenderSchedule();
+      cpMarkDirty();
+    }
+  });
+
+  document.getElementById('cp-day-add').addEventListener('click', function () {
+    cpSyncScheduleModel();
+
+    var index = CP.model.schedule.length;
+    CP.model.schedule.push({
+      day: '',
+      color: CP_DAY_COLORS[index % CP_DAY_COLORS.length],
+      shifts: [{ label: '', time: '' }]
+    });
+
+    cpRenderSchedule();
+    cpMarkDirty();
+    cpFocusDay(index);
+  });
+</script>

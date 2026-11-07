@@ -1,0 +1,98 @@
+<!-- ==================== MODAL DE RUTINA ==================== -->
+<div class="program-modal" id="programModal" role="dialog" aria-modal="true" aria-labelledby="programModalTitle" hidden>
+  <div class="program-modal-backdrop" data-close="true"></div>
+
+  <div class="program-modal-panel" role="document">
+    <button class="program-modal-close" id="programModalClose" type="button" aria-label="Cerrar">
+      <i class="fas fa-times"></i>
+    </button>
+
+    <div class="program-modal-media media" id="programModalMedia"></div>
+
+    <div class="program-modal-body">
+      <h2 class="program-modal-title" id="programModalTitle"></h2>
+
+      <div class="program-modal-section" id="programModalInstructions"></div>
+      <div class="program-modal-section" id="programModalExercises"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ==================== MODAL DE RUTINA ====================
+  let lastFocusedElement = null;
+
+  function findProgram(slug) {
+    return programs.find(program => program.slug === slug) || null;
+  }
+
+  function openProgramModal(slug) {
+    const program = findProgram(slug);
+    if (!program) return;
+
+    lastFocusedElement = document.activeElement;
+
+    const modal = document.getElementById('programModal');
+    const media = document.getElementById('programModalMedia');
+
+    document.getElementById('programModalTitle').textContent = program.title;
+
+    media.className = 'program-modal-media media' + (program.image ? '' : ' media--empty');
+    media.innerHTML = imageMarkup_(program.image, program.title, { pos: program.pos, fit: program.fit, eager: true });
+    watchImages_();
+
+    document.getElementById('programModalInstructions').innerHTML = program.instructions.length
+      ? '<h3 class="program-modal-heading">Instrucciones</h3>' +
+        '<ul class="program-modal-list program-modal-list--notes">' +
+          program.instructions.map(text => '<li>' + escapeHtml_(text) + '</li>').join('') +
+        '</ul>'
+      : '';
+
+    document.getElementById('programModalExercises').innerHTML = program.exercises.length
+      ? '<h3 class="program-modal-heading">Ejercicios</h3>' +
+        '<ol class="program-modal-list">' +
+          program.exercises.map(text => '<li>' + escapeHtml_(text) + '</li>').join('') +
+        '</ol>'
+      : '<p class="muted">Rutina pendiente de detalle.</p>';
+
+    modal.hidden = false;
+    requestAnimationFrame(() => modal.classList.add('is-open'));
+    document.body.classList.add('modal-open');
+
+    document.getElementById('programModalClose').focus();
+    document.addEventListener('keydown', onModalKeydown);
+  }
+
+  function closeProgramModal(updateHash) {
+    const modal = document.getElementById('programModal');
+    if (!modal || modal.hidden) return;
+
+    modal.classList.remove('is-open');
+    document.body.classList.remove('modal-open');
+    document.removeEventListener('keydown', onModalKeydown);
+
+    window.setTimeout(() => { 
+      modal.hidden = true; 
+      if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+        lastFocusedElement.focus({ preventScroll: true });
+      }
+    }, 220);
+
+    if (updateHash !== false && window.location.hash.indexOf('#programa/') === 0) {
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+  }
+
+  function onModalKeydown(event) {
+    if (event.key === 'Escape') {
+      closeProgramModal(true);
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('programModalClose').addEventListener('click', () => closeProgramModal(true));
+    document.getElementById('programModal').addEventListener('click', event => {
+      if (event.target.getAttribute('data-close') === 'true') closeProgramModal(true);
+    });
+  });
+</script>
