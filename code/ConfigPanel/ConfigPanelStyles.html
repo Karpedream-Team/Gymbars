@@ -1481,93 +1481,6 @@
   }
 
   /* ============================================================
-     Responsive
-     ============================================================ */
-
-  @media (max-width: 900px) {
-    .cp-app {
-      flex-direction: column;
-    }
-
-    .cp-rail {
-      width: 100%;
-      flex: 0 0 auto;
-      flex-direction: row;
-      align-items: center;
-      padding: 8px 10px;
-      gap: 8px;
-      overflow-x: auto;
-      overflow-y: hidden;
-    }
-
-    .cp-brand {
-      padding: 0;
-      margin: 0;
-      border: none;
-      flex: 0 0 auto;
-    }
-
-    .cp-brand-text,
-    .cp-rail-foot {
-      display: none;
-    }
-
-    .cp-nav {
-      flex-direction: row;
-      gap: 2px;
-    }
-
-    .cp-nav-item {
-      width: auto;
-      padding: 7px 10px;
-      white-space: nowrap;
-      font-size: 12px;
-    }
-
-    .cp-nav-item svg {
-      width: 15px;
-      height: 15px;
-      flex-basis: 15px;
-    }
-
-    .cp-topbar {
-      padding: 12px 16px;
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-
-    .cp-heading p {
-      display: none;
-    }
-
-    .cp-body {
-      padding: 16px 16px 50px;
-    }
-
-    .cp-fields,
-    .cp-program-lists {
-      grid-template-columns: minmax(0, 1fr);
-    }
-
-    .cp-row,
-    .cp-program-head {
-      grid-template-columns: 96px minmax(0, 1fr) 34px;
-    }
-
-    .cp-social-row {
-      grid-template-columns: 38px minmax(0, 1fr) auto;
-    }
-
-    .cp-social-row .cp-social-url {
-      grid-column: 1 / -1;
-    }
-
-    .cp-dirty {
-      display: none;
-    }
-  }
-
-  /* ============================================================
      Auth Gate Overlay
      ============================================================ */
 
@@ -1685,56 +1598,610 @@
   }
 
   /* ============================================================
-     Mobile touch responsiveness (< 640px)
+     Móvil y tablet pequeña (<= 900px)
+     Barra inferior al alcance del pulgar, guardado flotante,
+     campos de 16px (evita el zoom de iOS) y filas apiladas.
      ============================================================ */
 
-  @media (max-width: 640px) {
-    .cp-topbar {
-      padding: 10px 14px;
+  .cp-nav-more,
+  .cp-more {
+    display: none;
+  }
+
+  @media (max-width: 900px) {
+    :root {
+      --cp-bar-h: 62px;
+      --cp-safe-b: env(safe-area-inset-bottom, 0px);
+    }
+
+    html,
+    body {
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior-y: contain;
+    }
+
+    button,
+    a,
+    label.cp-file {
+      touch-action: manipulation;
+    }
+
+    .cp-app {
+      display: block;
+      height: 100vh;
+      height: 100dvh;
+    }
+
+    .cp-main {
+      height: 100%;
+    }
+
+    /* ---- Barra inferior ---- */
+
+    .cp-rail {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 50;
+      width: auto;
+      flex: none;
+      padding: 6px 8px calc(6px + var(--cp-safe-b));
+      overflow: visible;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .cp-brand,
+    .cp-rail-foot {
+      display: none;
+    }
+
+    .cp-nav {
+      flex-direction: row;
+      gap: 4px;
+      width: 100%;
+    }
+
+    .cp-nav .cp-nav-item[data-more] {
+      display: none;
+    }
+
+    .cp-nav [data-tab="sitio"] { order: 1; }
+    .cp-nav [data-tab="programas"] { order: 2; }
+    .cp-nav [data-tab="horario"] { order: 3; }
+    .cp-nav [data-tab="imagenes"] { order: 4; }
+    .cp-nav .cp-nav-more { order: 5; }
+
+    .cp-nav .cp-nav-item,
+    .cp-nav .cp-nav-more {
+      flex: 1 1 0;
+      min-width: 0;
+      min-height: 50px;
       flex-direction: column;
-      align-items: flex-start;
+      justify-content: center;
+      gap: 3px;
+      padding: 6px 2px;
+      border: none;
+      border-radius: 12px;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.62);
+      font-size: 11px;
+      font-weight: 500;
+      line-height: 1.1;
+    }
+
+    .cp-nav .cp-nav-more {
+      position: relative;
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+    }
+
+    .cp-nav .cp-nav-item svg,
+    .cp-nav .cp-nav-more svg {
+      width: 20px;
+      height: 20px;
+      flex: 0 0 20px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 1.7;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .cp-nav .cp-nav-more svg circle {
+      fill: currentColor;
+      stroke: none;
+    }
+
+    .cp-nav .cp-nav-item span,
+    .cp-nav .cp-nav-more span {
+      flex: none;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .cp-nav .cp-nav-item.is-active,
+    .cp-nav .cp-nav-more.is-active,
+    .cp-nav .cp-nav-more[aria-expanded="true"] {
+      background: #fff;
+      color: var(--cp-ink);
+    }
+
+    .cp-nav .cp-dot {
+      position: absolute;
+      top: 6px;
+      right: calc(50% - 18px);
+    }
+
+    .cp-nav .cp-nav-more.is-dirty .cp-dot {
+      display: block;
+    }
+
+    /* ---- Hoja «Más» ---- */
+
+    .cp-more:not([hidden]) {
+      display: block;
+      position: fixed;
+      inset: 0 0 calc(var(--cp-bar-h) + var(--cp-safe-b)) 0;
+      z-index: 45;
+    }
+
+    .cp-more-scrim {
+      position: absolute;
+      inset: 0;
+      background: rgba(9, 10, 14, 0.55);
+    }
+
+    .cp-more-sheet {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      padding: 8px 14px 14px;
+      background: var(--cp-surface);
+      border-radius: 18px 18px 0 0;
+      box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.3);
+      animation: cp-sheet-in 0.2s ease-out;
+    }
+
+    @keyframes cp-sheet-in {
+      from { transform: translateY(24px); opacity: 0.4; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .cp-more-grip {
+      width: 38px;
+      height: 4px;
+      margin: 0 auto 14px;
+      border-radius: 4px;
+      background: var(--cp-line-strong);
+    }
+
+    .cp-more-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 10px;
     }
 
+    .cp-more .cp-nav-item {
+      width: auto;
+      min-height: 56px;
+      padding: 12px 14px;
+      gap: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--cp-text);
+      background: var(--cp-surface-soft);
+      border: 1px solid var(--cp-line);
+      border-radius: 12px;
+    }
+
+    .cp-more .cp-nav-item svg {
+      width: 20px;
+      height: 20px;
+      flex-basis: 20px;
+    }
+
+    .cp-more .cp-nav-item.is-active {
+      background: var(--cp-navy);
+      border-color: var(--cp-navy);
+      color: #fff;
+    }
+
+    .cp-more-site {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      margin-top: 12px;
+      border-radius: 12px;
+      color: var(--cp-navy);
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      border: 1px solid var(--cp-line-strong);
+    }
+
+    /* ---- Cabecera compacta ---- */
+
+    .cp-topbar {
+      flex-direction: row;
+      align-items: center;
+      flex-wrap: nowrap;
+      gap: 10px;
+      padding: max(10px, env(safe-area-inset-top, 0px)) 14px 10px;
+    }
+
+    .cp-heading {
+      min-width: 0;
+      flex: 1;
+    }
+
+    .cp-heading h1 {
+      font-size: 18px;
+    }
+
+    .cp-heading p {
+      display: none;
+    }
+
     .cp-actions {
-      width: 100%;
-      justify-content: space-between;
-      flex-wrap: wrap;
+      width: auto;
+      flex: 0 0 auto;
+      gap: 8px;
+      flex-wrap: nowrap;
+    }
+
+    .cp-dirty {
+      display: none;
     }
 
     .cp-user-badge {
-      max-width: 220px;
-      font-size: 11px;
-      padding: 3px 8px;
+      gap: 6px;
+      max-width: 168px;
+      padding: 2px 4px 2px 10px;
+      font-size: 12px;
     }
 
     .cp-user-badge #cp-user-email {
-      max-width: 110px;
+      max-width: 78px;
     }
+
+    .cp-badge-verified {
+      display: none;
+    }
+
+    .cp-btn-logout {
+      min-height: 36px;
+      padding: 0 10px;
+      font-size: 12px;
+      color: var(--cp-text);
+    }
+
+    /* ---- Guardado flotante: solo aparece si hay cambios ---- */
+
+    #cp-save {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: calc(var(--cp-bar-h) + var(--cp-safe-b) + 12px);
+      z-index: 40;
+      width: auto;
+      height: 52px;
+      font-size: 15px;
+      font-weight: 700;
+      border-radius: 14px;
+      box-shadow: 0 10px 28px rgba(14, 14, 83, 0.38);
+    }
+
+    #cp-save:not([hidden]) {
+      display: none;
+    }
+
+    .cp-dirty:not([hidden]) ~ #cp-save:not([hidden]) {
+      display: inline-flex;
+    }
+
+    /* ---- Contenido ---- */
 
     .cp-body {
-      padding: 12px 12px 40px;
+      padding: 12px 12px calc(var(--cp-bar-h) + var(--cp-safe-b) + 96px);
+      scroll-behavior: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
-    .cp-input,
-    .cp-select,
-    .cp-textarea,
-    input[type="text"],
-    input[type="tel"],
-    input[type="url"],
-    select {
+    .cp-panel {
+      padding: 16px 14px;
+    }
+
+    .cp-panel-head {
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .cp-fields,
+    .cp-program-lists {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .cp-img-grid,
+    .cp-day-grid,
+    .cp-sys-grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    /* Controles táctiles: 16px evita el zoom al enfocar en iOS */
+    .cp-app input[type="text"],
+    .cp-app input[type="url"],
+    .cp-app input[type="tel"],
+    .cp-app input[type="email"],
+    .cp-app input[type="number"],
+    .cp-app input[type="search"],
+    .cp-app select,
+    .cp-app textarea {
+      height: 44px;
+      font-size: 16px;
+    }
+
+    .cp-app textarea {
+      height: auto;
+      min-height: 96px;
+    }
+
+    .cp-app input[type="color"] {
+      width: 52px;
+      height: 44px;
+    }
+
+    .cp-btn,
+    .cp-btn--small {
+      height: 44px;
+      padding: 0 16px;
       font-size: 14px;
-      min-height: 40px;
     }
 
-    .cp-btn {
-      min-height: 40px;
+    .cp-btn--icon {
+      width: 44px;
+      height: 44px;
+    }
+
+    .cp-icon-btn {
+      width: 42px;
+      height: 42px;
+      font-size: 16px;
+      border-radius: 8px;
+    }
+
+    .cp-field > span {
       font-size: 13px;
     }
 
-    .cp-picker-modal {
-      max-width: 95vw !important;
-      max-height: 90vh !important;
+    .cp-toolbar {
+      gap: 8px;
+    }
+
+    .cp-toolbar > .cp-btn,
+    .cp-toolbar > label.cp-file {
+      flex: 1 1 auto;
+    }
+
+    .cp-toolbar .cp-folder-input {
+      width: 100%;
+      flex: 1 1 100%;
+    }
+
+    .cp-toolbar .cp-hint {
+      flex: 1 1 100%;
+    }
+
+    .cp-toolbar .cp-spacer {
+      display: none;
+    }
+
+    .cp-mini-label select,
+    .cp-mini-label input {
+      height: 44px;
+      font-size: 16px;
+    }
+
+    /* ---- Filas de carrusel, características y programas ---- */
+
+    .cp-row,
+    .cp-program-head {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+    }
+
+    .cp-row-thumb {
+      aspect-ratio: 16 / 9;
+      max-height: 200px;
+      width: 100%;
+    }
+
+    .cp-order {
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      padding-top: 10px;
+      border-top: 1px solid var(--cp-line);
+    }
+
+    .cp-order-num {
+      margin-right: auto;
+      font-size: 13px;
+    }
+
+    .cp-list-row {
+      grid-template-columns: 24px minmax(0, 1fr);
+      gap: 6px 8px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed var(--cp-line);
+    }
+
+    .cp-list-row:last-child {
+      border-bottom: none;
+    }
+
+    .cp-list-actions {
+      grid-column: 2;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    /* ---- Horario ---- */
+
+    .cp-day-head {
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .cp-day-head input[type="text"] {
+      flex: 1 1 100%;
+    }
+
+    .cp-day-head .cp-icon-btn:first-of-type {
+      margin-left: auto;
+    }
+
+    .cp-shift {
+      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-rows: auto auto;
+      gap: 6px 8px;
+      padding-bottom: 10px;
+      margin-bottom: 10px;
+      border-bottom: 1px dashed var(--cp-line);
+    }
+
+    .cp-shift input:first-child {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    .cp-shift input:nth-child(2) {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    .cp-shift-actions {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .cp-day-foot {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 10px;
+    }
+
+    .cp-day-foot > div {
+      display: grid !important;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    /* ---- Redes ---- */
+
+    .cp-social-row {
+      grid-template-columns: 44px minmax(0, 1fr);
+      gap: 8px;
+    }
+
+    .cp-social-row input {
+      height: 44px;
+      font-size: 16px;
+    }
+
+    .cp-social-row .cp-social-icon {
+      width: 44px;
+      height: 44px;
+    }
+
+    .cp-social-row > input:not(:nth-of-type(1)),
+    .cp-social-row > div:last-child {
+      grid-column: 1 / -1;
+    }
+
+    .cp-social-row > div:last-child {
+      justify-content: flex-end;
+      gap: 8px !important;
+    }
+
+    /* ---- Sistema ---- */
+
+    .cp-kv {
+      grid-template-columns: 92px minmax(0, 1fr);
+      font-size: 13px;
+    }
+
+    .cp-log {
+      display: block;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    /* ---- Selector de imágenes: hoja a pantalla casi completa ---- */
+
+    .cp-modal {
+      padding: 0;
+      align-items: flex-end;
+    }
+
+    .cp-modal-card {
+      width: 100%;
+      max-height: 92vh;
+      max-height: 92dvh;
+      border-radius: 18px 18px 0 0;
+    }
+
+    .cp-modal-close {
+      width: 44px;
+      height: 44px;
+    }
+
+    .cp-picker-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      padding: 12px 12px calc(20px + var(--cp-safe-b));
+      gap: 10px;
+    }
+
+    .cp-picker-item span {
+      font-size: 12px;
+    }
+
+    /* ---- Avisos sobre la barra ---- */
+
+    .cp-toasts {
+      left: 12px;
+      right: 12px;
+      bottom: calc(var(--cp-bar-h) + var(--cp-safe-b) + 76px);
+      max-width: none;
+    }
+
+    .cp-toast {
+      font-size: 14px;
+    }
+
+    .cp-toast-close {
+      width: 32px;
+      height: 32px;
+      font-size: 20px;
+    }
+
+    /* ---- Pantalla de acceso ---- */
+
+    .cp-gate-card {
+      padding: 28px 20px;
+    }
+
+    .cp-google-btn {
+      min-height: 52px;
+      font-size: 15px;
     }
   }
 
