@@ -38,7 +38,7 @@ var SHEETS = {
   log: 'Bitácora'
 };
 
-var GOOGLE_AUTH_START_URL = 'https://script.google.com/macros/s/AKfycbzHdDBmf8G2uGoAp46dUIesbsZIwEMnpeRNoIC2JowabQGmiknjbaNz7gTgsDp1Jj4mXQ/exec';
+var GOOGLE_AUTH_START_URL = 'https://script.google.com/macros/s/AKfycbylsbf7neFjN-jheFeWqCT8ihfLZFj5OiQI-NSgfGnGaT5y97HZVkjohbseppM1yRnO/exec';
 var GOOGLE_AUTH_SHARED_SECRET = '38a01d228ceae777bba05516096f9e2f24131f0f5c7d42f00b03aeb00c6aff1c';
 
 

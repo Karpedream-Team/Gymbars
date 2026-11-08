@@ -13,7 +13,7 @@
  */
 
 // URL principal del Web App de Gymbars
-var MAIN_APP_URL = 'https://script.google.com/macros/s/AKfycby9ZokAaun5GVHblHVEAFJbaYd10uds_k532mL1Ado4kjJUZ-wIrGwhZdYbolT4l2Sj/exec';
+var MAIN_APP_URL = 'https://script.google.com/macros/s/AKfycbwJpwx7cUynhoeTQsBbdCUHKvCgS_1O1Q0YD9G4-XT8QFRPu2weyPgxwZW5HKKW9z-3KQ/exec';
 
 // Clave compartida con Code.gs / ConfigPanelService.gs de Gymbars
 var SHARED_SECRET = '38a01d228ceae777bba05516096f9e2f24131f0f5c7d42f00b03aeb00c6aff1c';

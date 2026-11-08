@@ -358,8 +358,7 @@
 
       var authTarget = CP_GOOGLE_AUTH_URL +
         (CP_GOOGLE_AUTH_URL.indexOf('?') === -1 ? '?' : '&') +
-        'nonce=' + encodeURIComponent(nonce) +
-        (CP_AUTH_CALLBACK_URL ? ('&callback=' + encodeURIComponent(CP_AUTH_CALLBACK_URL)) : '');
+        'nonce=' + encodeURIComponent(nonce);
 
       var popup = null;
       try {
