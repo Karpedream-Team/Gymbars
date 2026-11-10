@@ -110,7 +110,8 @@ function redirectPage_(url, nonce) {
 
   return HtmlService.createHtmlOutput(html)
     .setTitle('Gymbars')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover');
 }
 
 function page_(title, message, isError, email) {
@@ -150,7 +151,8 @@ function page_(title, message, isError, email) {
 
   return HtmlService.createHtmlOutput(html)
     .setTitle(title)
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover');
 }
 
 function escapeHtml_(value) {

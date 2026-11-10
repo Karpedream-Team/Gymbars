@@ -4,7 +4,7 @@
 <head>
   <base target="_top">
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -62,7 +62,7 @@
   </div>
 
   <div class="cp-app">
-    <nav class="cp-rail" aria-label="Secciones del panel">
+    <nav class="cp-rail" id="cp-rail" aria-label="Secciones del panel">
       <div class="cp-brand">
         <span class="cp-mark" aria-hidden="true">G</span>
         <span class="cp-brand-text">
@@ -80,11 +80,11 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
           <span>Imágenes</span><i class="cp-dot" aria-hidden="true"></i>
         </button>
-        <button type="button" class="cp-nav-item" data-tab="carrusel" data-more>
+        <button type="button" class="cp-nav-item" data-tab="carrusel">
           <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
           <span>Carrusel</span><i class="cp-dot" aria-hidden="true"></i>
         </button>
-        <button type="button" class="cp-nav-item" data-tab="caracteristicas" data-more>
+        <button type="button" class="cp-nav-item" data-tab="caracteristicas">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
           <span>Características</span><i class="cp-dot" aria-hidden="true"></i>
         </button>
@@ -96,21 +96,21 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>
           <span>Horario</span><i class="cp-dot" aria-hidden="true"></i>
         </button>
-        <button type="button" class="cp-nav-item" data-tab="redes" data-more>
+        <button type="button" class="cp-nav-item" data-tab="redes">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>
           <span>Redes</span><i class="cp-dot" aria-hidden="true"></i>
         </button>
-        <button type="button" class="cp-nav-item" data-tab="sistema" data-more>
+        <button type="button" class="cp-nav-item" data-tab="sistema">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           <span>Sistema</span><i class="cp-dot" aria-hidden="true"></i>
-        </button>
-        <button type="button" class="cp-nav-more" id="cp-nav-more" aria-haspopup="dialog" aria-expanded="false" onclick="cpToggleMore()">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
-          <span>Más</span><i class="cp-dot" aria-hidden="true"></i>
         </button>
       </div>
 
       <div class="cp-rail-foot">
+        <div class="cp-rail-account" id="cp-rail-account" hidden>
+          <span id="cp-user-email-m"></span>
+          <button type="button" onclick="cpLogout()">Cerrar sesión</button>
+        </div>
         <a id="cp-web-link" href="#" target="_blank" rel="noopener">
           Abrir sitio
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
@@ -134,6 +134,9 @@
           </span>
           <button type="button" class="cp-btn cp-btn--primary" id="cp-save">Guardar cambios</button>
         </div>
+        <button type="button" class="cp-menu-toggle" id="cp-menu-toggle" aria-label="Abrir menú" aria-controls="cp-rail" aria-expanded="false" onclick="cpToggleMenu()">
+          <span></span><span></span><span></span>
+        </button>
       </header>
       <div class="cp-progress" id="cp-progress" aria-hidden="true"></div>
 
@@ -168,31 +171,7 @@
 
   <?!= include('ConfigPanel/ImagePicker/ImagePicker') ?>
 
-  <div class="cp-more" id="cp-more" hidden>
-    <div class="cp-more-scrim" onclick="cpToggleMore(false)"></div>
-    <div class="cp-more-sheet" role="dialog" aria-label="Más secciones">
-      <div class="cp-more-grip" aria-hidden="true"></div>
-      <div class="cp-more-grid">
-      <button type="button" class="cp-nav-item" data-tab="carrusel">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
-          <span>Carrusel</span><i class="cp-dot" aria-hidden="true"></i>
-        </button>
-      <button type="button" class="cp-nav-item" data-tab="caracteristicas">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          <span>Características</span><i class="cp-dot" aria-hidden="true"></i>
-        </button>
-      <button type="button" class="cp-nav-item" data-tab="redes">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>
-          <span>Redes</span><i class="cp-dot" aria-hidden="true"></i>
-        </button>
-      <button type="button" class="cp-nav-item" data-tab="sistema">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          <span>Sistema</span><i class="cp-dot" aria-hidden="true"></i>
-        </button>
-      </div>
-      <a class="cp-more-site" id="cp-web-link-m" href="#" target="_blank" rel="noopener">Abrir sitio web</a>
-    </div>
-  </div>
+  <div class="cp-menu-scrim" id="cp-menu-scrim" onclick="cpToggleMenu(false)"></div>
 
   <div class="cp-toasts" id="cp-toasts" role="status" aria-live="polite"></div>
 
@@ -275,8 +254,6 @@
       if (CP_WEB_URL) {
         var webLink = document.getElementById('cp-web-link');
         if (webLink) webLink.href = CP_WEB_URL;
-        var webLinkM = document.getElementById('cp-web-link-m');
-        if (webLinkM) webLinkM.href = CP_WEB_URL;
         var siteLink = document.getElementById('cp-gate-site-link');
         if (siteLink) siteLink.href = CP_WEB_URL;
       } else {
@@ -336,6 +313,10 @@
       if (badge) badge.style.display = 'inline-flex';
       var emailEl = document.getElementById('cp-user-email');
       if (emailEl && email) emailEl.textContent = email;
+      var railAccount = document.getElementById('cp-rail-account');
+      var emailMobile = document.getElementById('cp-user-email-m');
+      if (railAccount) railAccount.hidden = false;
+      if (emailMobile && email) emailMobile.textContent = email;
 
       cpLoadData();
     }
@@ -579,12 +560,6 @@
         cpSwitchTab(button.getAttribute('data-tab'));
       });
 
-      document.getElementById('cp-more').addEventListener('click', function (event) {
-        if (event.target.closest('.cp-nav-item')) {
-          cpSwitchTab(event.target.closest('.cp-nav-item').getAttribute('data-tab'));
-        }
-      });
-
       document.getElementById('cp-save').addEventListener('click', cpSaveCurrentTab);
 
       document.addEventListener('input', function (event) {
@@ -604,7 +579,7 @@
       });
 
       document.addEventListener('keydown', function (event) {
-        if (event.key === 'Escape') { cpClosePicker(); cpToggleMore(false); }
+        if (event.key === 'Escape') { cpClosePicker(); cpToggleMenu(false); }
       });
     }
 
@@ -624,13 +599,11 @@
       }
 
       CP.tab = tab;
-      cpToggleMore(false);
+      cpToggleMenu(false);
 
       Array.prototype.forEach.call(document.querySelectorAll('.cp-nav-item'), function (button) {
         button.classList.toggle('is-active', button.getAttribute('data-tab') === tab);
       });
-      var moreBtn = document.getElementById('cp-nav-more');
-      if (moreBtn) moreBtn.classList.toggle('is-active', CP_MORE_TABS.indexOf(tab) !== -1);
       Array.prototype.forEach.call(document.querySelectorAll('.cp-pane'), function (pane) {
         pane.classList.toggle('is-active', pane.id === 'pane-' + tab);
       });
@@ -646,16 +619,19 @@
       cpRefreshDirtyUi();
     }
 
-    var CP_MORE_TABS = ['carrusel', 'caracteristicas', 'redes', 'sistema'];
-
-    /** Abre o cierra la hoja «Más» (solo visible en móvil). */
-    function cpToggleMore(open) {
-      var sheet = document.getElementById('cp-more');
-      var button = document.getElementById('cp-nav-more');
-      if (!sheet) return;
-      if (open === undefined) open = sheet.hidden;
-      sheet.hidden = !open;
-      if (button) button.setAttribute('aria-expanded', open ? 'true' : 'false');
+    /** Abre o cierra el menú desplegable (móvil). */
+    function cpToggleMenu(open) {
+      var rail = document.getElementById('cp-rail');
+      var button = document.getElementById('cp-menu-toggle');
+      var scrim = document.getElementById('cp-menu-scrim');
+      if (!rail) return;
+      if (open === undefined) open = !rail.classList.contains('is-open');
+      rail.classList.toggle('is-open', open);
+      if (scrim) scrim.classList.toggle('is-open', open);
+      if (button) {
+        button.setAttribute('aria-expanded', open ? 'true' : 'false');
+        button.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
+      }
     }
 
     function cpSaveCurrentTab() {
@@ -686,10 +662,6 @@
         button.classList.toggle('is-dirty', !!CP.dirty[tab]);
       });
 
-      var moreBtn = document.getElementById('cp-nav-more');
-      if (moreBtn) {
-        moreBtn.classList.toggle('is-dirty', CP_MORE_TABS.some(function (tab) { return CP.dirty[tab]; }));
-      }
     }
 
     function cpHasDirty() {

@@ -1599,19 +1599,21 @@
 
   /* ============================================================
      Móvil y tablet pequeña (<= 900px)
-     Barra inferior al alcance del pulgar, guardado flotante,
+     Menú desplegable como en el sitio, guardado en la cabecera,
      campos de 16px (evita el zoom de iOS) y filas apiladas.
+     Nada depende del borde inferior de la pantalla: dentro del
+     iframe de Apps Script en iOS ese borde puede quedar oculto.
      ============================================================ */
 
-  .cp-nav-more,
-  .cp-more {
+  .cp-menu-toggle,
+  .cp-menu-scrim,
+  .cp-rail-account {
     display: none;
   }
 
   @media (max-width: 900px) {
     :root {
-      --cp-bar-h: 62px;
-      --cp-safe-b: env(safe-area-inset-bottom, 0px);
+      --cp-top-h: calc(58px + env(safe-area-inset-top, 0px));
     }
 
     html,
@@ -1634,205 +1636,52 @@
 
     .cp-main {
       height: 100%;
-    }
-
-    /* ---- Barra inferior ---- */
-
-    .cp-rail {
-      position: fixed;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      z-index: 50;
-      width: auto;
-      flex: none;
-      padding: 6px 8px calc(6px + var(--cp-safe-b));
-      overflow: visible;
-      border-top: 1px solid rgba(255, 255, 255, 0.12);
-    }
-
-    .cp-brand,
-    .cp-rail-foot {
-      display: none;
-    }
-
-    .cp-nav {
-      flex-direction: row;
-      gap: 4px;
       width: 100%;
-    }
-
-    .cp-nav .cp-nav-item[data-more] {
-      display: none;
-    }
-
-    .cp-nav [data-tab="sitio"] { order: 1; }
-    .cp-nav [data-tab="programas"] { order: 2; }
-    .cp-nav [data-tab="horario"] { order: 3; }
-    .cp-nav [data-tab="imagenes"] { order: 4; }
-    .cp-nav .cp-nav-more { order: 5; }
-
-    .cp-nav .cp-nav-item,
-    .cp-nav .cp-nav-more {
-      flex: 1 1 0;
-      min-width: 0;
-      min-height: 50px;
-      flex-direction: column;
-      justify-content: center;
-      gap: 3px;
-      padding: 6px 2px;
-      border: none;
-      border-radius: 12px;
-      background: transparent;
-      color: rgba(255, 255, 255, 0.62);
-      font-size: 11px;
-      font-weight: 500;
-      line-height: 1.1;
-    }
-
-    .cp-nav .cp-nav-more {
-      position: relative;
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-    }
-
-    .cp-nav .cp-nav-item svg,
-    .cp-nav .cp-nav-more svg {
-      width: 20px;
-      height: 20px;
-      flex: 0 0 20px;
-      fill: none;
-      stroke: currentColor;
-      stroke-width: 1.7;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-    }
-
-    .cp-nav .cp-nav-more svg circle {
-      fill: currentColor;
-      stroke: none;
-    }
-
-    .cp-nav .cp-nav-item span,
-    .cp-nav .cp-nav-more span {
-      flex: none;
       max-width: 100%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }
 
-    .cp-nav .cp-nav-item.is-active,
-    .cp-nav .cp-nav-more.is-active,
-    .cp-nav .cp-nav-more[aria-expanded="true"] {
-      background: #fff;
-      color: var(--cp-ink);
+    /* Evita que algo ancho haga que Safari encoja toda la página */
+    html,
+    body {
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
     }
 
-    .cp-nav .cp-dot {
-      position: absolute;
-      top: 6px;
-      right: calc(50% - 18px);
+    .cp-app,
+    .cp-body {
+      max-width: 100%;
+      overflow-x: hidden;
     }
 
-    .cp-nav .cp-nav-more.is-dirty .cp-dot {
-      display: block;
+    .cp-pane,
+    .cp-pane > *,
+    .cp-pane .cp-card {
+      min-width: 0;
+      max-width: 100%;
     }
 
-    /* ---- Hoja «Más» ---- */
-
-    .cp-more:not([hidden]) {
-      display: block;
-      position: fixed;
-      inset: 0 0 calc(var(--cp-bar-h) + var(--cp-safe-b)) 0;
-      z-index: 45;
+    .cp-pane img,
+    .cp-pane video,
+    .cp-pane iframe {
+      max-width: 100%;
     }
 
-    .cp-more-scrim {
-      position: absolute;
-      inset: 0;
-      background: rgba(9, 10, 14, 0.55);
+    .cp-img-grid-2 {
+      grid-template-columns: minmax(0, 1fr);
     }
 
-    .cp-more-sheet {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      padding: 8px 14px 14px;
-      background: var(--cp-surface);
-      border-radius: 18px 18px 0 0;
-      box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.3);
-      animation: cp-sheet-in 0.2s ease-out;
-    }
-
-    @keyframes cp-sheet-in {
-      from { transform: translateY(24px); opacity: 0.4; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-
-    .cp-more-grip {
-      width: 38px;
-      height: 4px;
-      margin: 0 auto 14px;
-      border-radius: 4px;
-      background: var(--cp-line-strong);
-    }
-
-    .cp-more-grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 10px;
-    }
-
-    .cp-more .cp-nav-item {
-      width: auto;
-      min-height: 56px;
-      padding: 12px 14px;
-      gap: 12px;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--cp-text);
-      background: var(--cp-surface-soft);
-      border: 1px solid var(--cp-line);
-      border-radius: 12px;
-    }
-
-    .cp-more .cp-nav-item svg {
-      width: 20px;
-      height: 20px;
-      flex-basis: 20px;
-    }
-
-    .cp-more .cp-nav-item.is-active {
-      background: var(--cp-navy);
-      border-color: var(--cp-navy);
-      color: #fff;
-    }
-
-    .cp-more-site {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 48px;
-      margin-top: 12px;
-      border-radius: 12px;
-      color: var(--cp-navy);
-      font-size: 14px;
-      font-weight: 500;
-      text-decoration: none;
-      border: 1px solid var(--cp-line-strong);
-    }
-
-    /* ---- Cabecera compacta ---- */
+    /* ---- Cabecera: título, guardar (si hay cambios) y menú ---- */
 
     .cp-topbar {
+      position: relative;
+      z-index: 70;
       flex-direction: row;
       align-items: center;
       flex-wrap: nowrap;
       gap: 10px;
-      padding: max(10px, env(safe-area-inset-top, 0px)) 14px 10px;
+      height: var(--cp-top-h);
+      padding: env(safe-area-inset-top, 0px) 8px 0 16px;
     }
 
     .cp-heading {
@@ -1842,6 +1691,9 @@
 
     .cp-heading h1 {
       font-size: 18px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .cp-heading p {
@@ -1855,46 +1707,18 @@
       flex-wrap: nowrap;
     }
 
-    .cp-dirty {
-      display: none;
-    }
-
+    .cp-dirty,
     .cp-user-badge {
-      gap: 6px;
-      max-width: 168px;
-      padding: 2px 4px 2px 10px;
-      font-size: 12px;
+      display: none !important;
     }
 
-    .cp-user-badge #cp-user-email {
-      max-width: 78px;
-    }
-
-    .cp-badge-verified {
-      display: none;
-    }
-
-    .cp-btn-logout {
-      min-height: 36px;
-      padding: 0 10px;
-      font-size: 12px;
-      color: var(--cp-text);
-    }
-
-    /* ---- Guardado flotante: solo aparece si hay cambios ---- */
-
+    /* Guardar aparece solo si hay cambios sin guardar */
     #cp-save {
-      position: fixed;
-      left: 12px;
-      right: 12px;
-      bottom: calc(var(--cp-bar-h) + var(--cp-safe-b) + 12px);
-      z-index: 40;
-      width: auto;
-      height: 52px;
-      font-size: 15px;
+      height: 40px;
+      padding: 0 14px;
+      font-size: 14px;
       font-weight: 700;
-      border-radius: 14px;
-      box-shadow: 0 10px 28px rgba(14, 14, 83, 0.38);
+      border-radius: 10px;
     }
 
     #cp-save:not([hidden]) {
@@ -1905,10 +1729,156 @@
       display: inline-flex;
     }
 
+    /* ---- Botón de menú (mismo gesto que el sitio) ---- */
+
+    .cp-menu-toggle {
+      display: flex;
+      flex: 0 0 44px;
+      width: 44px;
+      height: 44px;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 15px 11px;
+      background: transparent;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .cp-menu-toggle span {
+      display: block;
+      height: 2px;
+      width: 100%;
+      background: var(--cp-ink);
+      border-radius: 2px;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    .cp-menu-toggle[aria-expanded="true"] span:nth-child(1) {
+      transform: translateY(7px) rotate(45deg);
+    }
+
+    .cp-menu-toggle[aria-expanded="true"] span:nth-child(2) {
+      opacity: 0;
+    }
+
+    .cp-menu-toggle[aria-expanded="true"] span:nth-child(3) {
+      transform: translateY(-7px) rotate(-45deg);
+    }
+
+    /* ---- Menú desplegable ---- */
+
+    .cp-rail {
+      position: fixed;
+      top: var(--cp-top-h);
+      left: 0;
+      right: 0;
+      z-index: 65;
+      width: auto;
+      flex: none;
+      max-height: calc(100vh - var(--cp-top-h) - 12px);
+      max-height: calc(100dvh - var(--cp-top-h) - 12px);
+      padding: 6px 12px 12px;
+      overflow-y: auto;
+      background: var(--cp-rail);
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 0 0 16px 16px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+      transform: translateY(-8px);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+    }
+
+    .cp-rail.is-open {
+      transform: translateY(0);
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .cp-menu-scrim.is-open {
+      display: block;
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      background: rgba(9, 10, 14, 0.5);
+    }
+
+    .cp-brand {
+      display: none;
+    }
+
+    .cp-nav {
+      flex: none;
+      gap: 0;
+    }
+
+    .cp-nav .cp-nav-item {
+      min-height: 52px;
+      padding: 12px;
+      gap: 14px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.78);
+    }
+
+    .cp-nav .cp-nav-item svg {
+      width: 20px;
+      height: 20px;
+      flex-basis: 20px;
+    }
+
+    .cp-nav .cp-nav-item.is-active {
+      background: #fff;
+      color: var(--cp-ink);
+    }
+
+    .cp-rail-foot {
+      margin-top: 8px;
+      padding-top: 10px;
+    }
+
+    .cp-rail-foot a {
+      min-height: 48px;
+      padding: 12px;
+      font-size: 15px;
+    }
+
+    .cp-rail-account:not([hidden]) {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 4px 12px 10px;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 13px;
+    }
+
+    .cp-rail-account span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .cp-rail-account button {
+      flex: 0 0 auto;
+      min-height: 40px;
+      padding: 0 14px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
     /* ---- Contenido ---- */
 
     .cp-body {
-      padding: 12px 12px calc(var(--cp-bar-h) + var(--cp-safe-b) + 96px);
+      padding: 12px 12px 110px;
       scroll-behavior: auto;
       -webkit-overflow-scrolling: touch;
     }
@@ -2148,15 +2118,15 @@
     /* ---- Selector de imágenes: hoja a pantalla casi completa ---- */
 
     .cp-modal {
-      padding: 0;
-      align-items: flex-end;
+      padding: calc(env(safe-area-inset-top, 0px) + 8px) 8px 8px;
+      align-items: flex-start;
     }
 
     .cp-modal-card {
       width: 100%;
-      max-height: 92vh;
-      max-height: 92dvh;
-      border-radius: 18px 18px 0 0;
+      max-height: 86vh;
+      max-height: 86dvh;
+      border-radius: 14px;
     }
 
     .cp-modal-close {
@@ -2166,7 +2136,7 @@
 
     .cp-picker-grid {
       grid-template-columns: repeat(2, minmax(0, 1fr));
-      padding: 12px 12px calc(20px + var(--cp-safe-b));
+      padding: 12px 12px 24px;
       gap: 10px;
     }
 
@@ -2179,7 +2149,8 @@
     .cp-toasts {
       left: 12px;
       right: 12px;
-      bottom: calc(var(--cp-bar-h) + var(--cp-safe-b) + 76px);
+      top: calc(var(--cp-top-h) + 8px);
+      bottom: auto;
       max-width: none;
     }
 

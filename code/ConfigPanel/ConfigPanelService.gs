@@ -400,7 +400,8 @@ function cpGoogleAuthResultPage_(result) {
 
   return HtmlService.createHtmlOutput(html)
     .setTitle(ok ? 'Sesión iniciada' : 'Error al verificar cuenta')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover');
 }
 
 function cpLogoutAdmin(token) {
